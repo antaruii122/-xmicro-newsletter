@@ -251,6 +251,12 @@ export default function NewsletterDashboard() {
                                     </p>
                                 )}
 
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                                    <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                                        {article.url}
+                                    </a>
+                                </div>
+
                                 <div className="card-footer">
                                     <span>
                                         {(() => {

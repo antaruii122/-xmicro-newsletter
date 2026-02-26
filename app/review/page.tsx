@@ -105,6 +105,11 @@ export default function ReviewPage() {
                                 >
                                     {article.title}
                                 </a>
+                                <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", wordBreak: 'break-all', marginTop: '4px', marginBottom: '8px' }}>
+                                    <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                                        {article.url}
+                                    </a>
+                                </div>
                                 <div className="review-item-meta">
                                     <span className={`tag ${article.category}`}>{article.category}</span>
                                     <span>&bull;</span>
