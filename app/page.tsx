@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // The exact structure matching n8n output
 interface Article {
@@ -51,12 +51,14 @@ const MOCK_ARTICLES: Article[] = [
 type FilterType = "ALL" | "DRAM" | "NAND" | "SUPPLY";
 
 export default function InternalDashboard() {
+    const [articles, setArticles] = useState<Article[]>(MOCK_ARTICLES);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeFilter, setActiveFilter] = useState<FilterType>("ALL");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isFetching, setIsFetching] = useState(false);
 
     // Filter logic
-    const filteredArticles = MOCK_ARTICLES.filter((article) => {
+    const filteredArticles = articles.filter((article) => {
         const matchesFilter = activeFilter === "ALL" || article.category === activeFilter;
         const matchesSearch =
             article.headline.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,8 +97,54 @@ export default function InternalDashboard() {
         }
     };
 
+    const handleFetchNews = async () => {
+        setIsFetching(true);
+        try {
+            // 1. Send POST to n8n webhook
+            await fetch("https://n8n.quicklyandgood.com/webhook/6b334af6-c189-45ed-89f7-4400a8149e05", {
+                method: "POST"
+            });
+            console.log("n8n webhook triggered");
+
+            // 2. Poll the local API endpoint every 5 seconds
+            const pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch("/api/articles");
+                    if (res.ok) {
+                        const data = await res.json();
+                        // Assuming data returns an array, or an object containing an array. Adapt if necessary.
+                        const fetchedArticles = Array.isArray(data) ? data : (data.articles || []);
+
+                        if (fetchedArticles && fetchedArticles.length > 0) {
+                            setArticles(fetchedArticles as Article[]);
+                            setSelectedIds(new Set()); // Reset selections on new data
+                            clearInterval(pollInterval);
+                            clearTimeout(timeoutId);
+                            setIsFetching(false);
+                            console.log("Successfully fetched new articles");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error during polling:", err);
+                }
+            }, 5000);
+
+            // 3. Set a 90 second timeout safety fallback
+            const timeoutId = setTimeout(() => {
+                clearInterval(pollInterval);
+                setIsFetching(false);
+                console.log("Polling timed out after 90 seconds");
+                // We aren't strictly required to alert, but keeping the visual state clear.
+            }, 90000);
+
+        } catch (error) {
+            console.error("Failed to trigger webhook:", error);
+            setIsFetching(false);
+        }
+    };
+
     const handleGenerate = () => {
-        const selectedArticles = MOCK_ARTICLES.filter(a => selectedIds.has(a.id));
+        const selectedArticles = articles.filter(a => selectedIds.has(a.id));
         console.log("Generating newsletter with:", selectedArticles);
         alert(`Newsletter Generation Triggered for ${selectedIds.size} articles. Check console.`);
     };
@@ -105,6 +153,13 @@ export default function InternalDashboard() {
         <div className="dashboard-container">
             <header className="header">
                 <h1>Newsletter Generator (Internal Tool)</h1>
+                <button
+                    className={`fetch-btn ${isFetching ? 'pulsing' : ''}`}
+                    onClick={handleFetchNews}
+                    disabled={isFetching}
+                >
+                    {isFetching ? "Buscando noticias..." : "Buscar Noticias"}
+                </button>
             </header>
 
             <div className="controls">
@@ -139,6 +194,7 @@ export default function InternalDashboard() {
                                 checked={filteredArticles.every(a => selectedIds.has(a.id))}
                                 onChange={toggleAllVisible}
                                 title="Select/Deselect all visible"
+                                disabled={isFetching}
                             />
                         </div>
                         <div className="article-content" style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
@@ -155,13 +211,14 @@ export default function InternalDashboard() {
                     filteredArticles.map((article) => {
                         const isSelected = selectedIds.has(article.id);
                         return (
-                            <div key={article.id} className={`article-card ${isSelected ? 'selected' : ''}`}>
+                            <div key={article.id} className={`article-card ${isSelected ? 'selected' : ''} ${isFetching ? 'loading' : ''}`}>
                                 <div className="checkbox-container">
                                     <input
                                         type="checkbox"
                                         className="custom-checkbox"
                                         checked={isSelected}
                                         onChange={() => toggleSelection(article.id)}
+                                        disabled={isFetching}
                                     />
                                 </div>
                                 <div className="article-content">
@@ -192,7 +249,7 @@ export default function InternalDashboard() {
                 </div>
                 <button
                     className="generate-btn"
-                    disabled={selectedIds.size === 0}
+                    disabled={selectedIds.size === 0 || isFetching}
                     onClick={handleGenerate}
                 >
                     Generar Newsletter
