@@ -10,12 +10,13 @@ export async function POST(request) {
         // Read raw body - n8n sends it in various encodings, handle all cases
         let text = await request.text();
 
-        // n8n sometimes prepends "=" (URL-encoded form quirk) — strip it
-        text = text.trim();
-        if (text.startsWith('=')) text = text.slice(1);
+        // n8n can prepend stray characters (like "=") before the JSON.
+        // Instead of brittle prefix-stripping, extract the JSON object directly.
+        const match = text.match(/(\{[\s\S]*\})/);
+        if (!match) throw new Error('No JSON object found in body. Raw start: ' + text.slice(0, 50));
 
-        // n8n sometimes double-encodes (JSON string inside a JSON string) — unwrap
-        let data = JSON.parse(text);
+        let data = JSON.parse(match[1]);
+        // Handle double-encoding (JSON string inside a JSON string)
         if (typeof data === 'string') data = JSON.parse(data);
 
         // data.all_results is { dram_pricing: [...], nand_storage: [...], supply_chain: [...] }
