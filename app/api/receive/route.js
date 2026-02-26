@@ -78,7 +78,7 @@ export async function POST(request) {
                 if (item && item.title && item.url) {
                     articles.push({
                         title: item.title,
-                        description: item.content || item.snippet || '',
+                        description: item.content || item.snippet || item.description || item.text || item.body || '',
                         url: item.url,
                         category
                     });
@@ -88,6 +88,7 @@ export async function POST(request) {
 
         await kv.set('newsletter:articles', JSON.stringify(articles), { ex: 86400 });
         if (data.resume_url) await kv.set('newsletter:resume_url', data.resume_url, { ex: 86400 });
+        await kv.set('newsletter:raw_payload', JSON.stringify(data), { ex: 86400 });
 
         return Response.json({ success: true, count: articles.length });
 

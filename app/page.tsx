@@ -17,6 +17,7 @@ export default function NewsletterDashboard() {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeFilter, setActiveFilter] = useState("ALL");
     const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+    const [expandedUrls, setExpandedUrls] = useState<Set<string>>(new Set());
 
     // Load articles from Redis and previous selections from sessionStorage on mount
     useEffect(() => {
@@ -109,6 +110,14 @@ export default function NewsletterDashboard() {
         if (next.has(url)) next.delete(url);
         else next.add(url);
         setSelectedUrls(next);
+    };
+
+    const toggleExpand = (url: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const next = new Set(expandedUrls);
+        if (next.has(url)) next.delete(url);
+        else next.add(url);
+        setExpandedUrls(next);
     };
 
     const toggleAllVisible = () => {
@@ -206,10 +215,11 @@ export default function NewsletterDashboard() {
                 <div className="article-grid">
                     {filteredArticles.map((article, i) => {
                         const isSelected = selectedUrls.has(article.url);
+                        const isExpanded = expandedUrls.has(article.url);
                         return (
                             <div
                                 key={i}
-                                className={`article-card ${isSelected ? 'selected' : ''}`}
+                                className={`article-card ${isSelected ? 'selected' : ''} ${isExpanded ? 'expanded' : ''}`}
                                 onClick={() => toggleSelection(article.url)}
                             >
                                 <div className="card-header">
@@ -248,6 +258,12 @@ export default function NewsletterDashboard() {
                                             catch { return "link"; }
                                         })()}
                                     </span>
+                                    <button
+                                        className="expand-btn"
+                                        onClick={(e) => toggleExpand(article.url, e)}
+                                    >
+                                        {isExpanded ? 'Collapse ▲' : 'Expand ▼'}
+                                    </button>
                                 </div>
                             </div>
                         );

@@ -269,7 +269,18 @@ body {
     color: var(--text-primary);
     text-decoration: none;
     margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.article-card.expanded .card-title {
     display: block;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    overflow: visible;
 }
 
 .card-title:hover {
@@ -283,7 +294,35 @@ body {
     line-height: 1.5;
     margin-bottom: 1rem;
     flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.article-card.expanded .card-description {
+    display: block;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
     overflow: visible;
+}
+
+.expand-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color 0.2s;
+}
+
+.expand-btn:hover {
+    color: var(--accent);
 }
 
 .card-footer {
