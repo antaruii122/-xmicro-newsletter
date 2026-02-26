@@ -143,10 +143,30 @@ export default function InternalDashboard() {
         }
     };
 
-    const handleGenerate = () => {
-        const selectedArticles = articles.filter(a => selectedIds.has(a.id));
-        console.log("Generating newsletter with:", selectedArticles);
-        alert(`Newsletter Generation Triggered for ${selectedIds.size} articles. Check console.`);
+    const handleGenerate = async () => {
+        setIsFetching(true);
+        try {
+            const selectedArticles = articles.filter(a => selectedIds.has(a.id));
+            const res = await fetch("/api/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ selected_articles: selectedArticles })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert(data.message || `Newsletter Generation Triggered successfully.`);
+                setSelectedIds(new Set());
+            } else {
+                alert(`Error: ${data.error || 'Failed to submit.'}`);
+            }
+        } catch (err) {
+            console.error("Submission error:", err);
+            alert("An error occurred while submitting.");
+        } finally {
+            setIsFetching(false);
+        }
     };
 
     return (
