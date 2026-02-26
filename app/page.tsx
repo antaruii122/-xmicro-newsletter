@@ -14,48 +14,33 @@ interface Article {
     score: number;
 }
 
-// Mock Data matching n8n schema
-const MOCK_ARTICLES: Article[] = [
-    {
-        id: "art-001",
-        headline: "Samsung to cut legacy DRAM production by 30% in Q3",
-        summary: "In a move to stabilize prices, Samsung Electronics announced a deeper cut to legacy DDR4 production, focusing resources on HBM3E and DDR5 advanced nodes.",
-        url: "https://example.com/samsung-dram-cut",
-        source: "Digitimes",
-        category: "DRAM",
-        published_date: "2026-02-25",
-        score: 85
-    },
-    {
-        id: "art-002",
-        headline: "NAND Flash contract prices projected to rise 15% amid AI server demand",
-        summary: "Enterprise SSD demand continues to outpace supply, leading major NAND manufacturers to aggressively raise contract prices for the upcoming quarter.",
-        url: "https://example.com/nand-price-hike",
-        source: "TrendForce",
-        category: "NAND",
-        published_date: "2026-02-26",
-        score: 92
-    },
-    {
-        id: "art-003",
-        headline: "New TSMC Fab in Arizona faces delays due to localized supply chain bottlenecks",
-        summary: "Critical materials including specialized chemicals are facing import delays, potentially pushing back full operational capacity for TSMC's new Arizona facility.",
-        url: "https://example.com/tsmc-az-delay",
-        source: "Bloomberg Tech",
-        category: "SUPPLY",
-        published_date: "2026-02-24",
-        score: 78
-    }
-];
+
 
 type FilterType = "ALL" | "DRAM" | "NAND" | "SUPPLY";
 
 export default function InternalDashboard() {
-    const [articles, setArticles] = useState<Article[]>(MOCK_ARTICLES);
+    const [articles, setArticles] = useState<Article[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeFilter, setActiveFilter] = useState<FilterType>("ALL");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isFetching, setIsFetching] = useState(false);
+
+    // Auto-load articles from Redis on page mount
+    useEffect(() => {
+        const loadExisting = async () => {
+            try {
+                const res = await fetch("/api/articles");
+                if (res.ok) {
+                    const data = await res.json();
+                    const fetched = Array.isArray(data) ? data : (data.articles || []);
+                    if (fetched.length > 0) setArticles(fetched);
+                }
+            } catch (err) {
+                console.error("Failed to load existing articles:", err);
+            }
+        };
+        loadExisting();
+    }, []);
 
     // Filter logic
     const filteredArticles = articles.filter((article) => {
