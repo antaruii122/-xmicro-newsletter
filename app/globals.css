@@ -283,6 +283,7 @@ body {
     line-height: 1.5;
     margin-bottom: 1rem;
     flex-grow: 1;
+    overflow: visible;
 }
 
 .card-footer {

@@ -13,10 +13,14 @@ export async function POST(request) {
             return Response.json({ error: 'No articles selected' }, { status: 400 });
         }
 
-        const resumeUrl = await kv.get('newsletter:resume_url');
+        let resumeUrl = await kv.get('newsletter:resume_url');
 
         if (!resumeUrl) {
             return Response.json({ error: 'No n8n resume URL found.' }, { status: 400 });
+        }
+
+        if (typeof resumeUrl === 'string' && !resumeUrl.startsWith('http')) {
+            resumeUrl = 'https://' + resumeUrl;
         }
 
         const n8nResponse = await fetch(resumeUrl, {

@@ -233,8 +233,12 @@ export default function NewsletterDashboard() {
                                 >
                                     {article.title}
                                 </a>
-                                {article.description && (
+                                {article.description ? (
                                     <p className="card-description">{article.description}</p>
+                                ) : (
+                                    <p className="card-description" style={{ fontStyle: 'italic', opacity: 0.5, color: 'var(--text-secondary)' }}>
+                                        No text provided by source.
+                                    </p>
                                 )}
 
                                 <div className="card-footer">
