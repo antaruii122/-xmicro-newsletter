@@ -16,19 +16,28 @@ export async function POST(request) {
             supply_chain: 'SUPPLY',
         };
 
-        // If the payload is malformed (e.g., all_results is "=[object Object]" instead of an actual object)
+        // DEBUG: capture what we actually received
+        const debug = {
+            all_results_type: typeof all_results,
+            all_results_keys: all_results ? Object.keys(all_results) : [],
+            total_articles_received: total_articles,
+            resume_url_received: resume_url,
+        };
+
         if (typeof all_results === 'string') {
             return Response.json({
-                error: `Received a string instead of an object for all_results. Value was: "${all_results.slice(0, 50)}...". Please check your n8n HTTP Request node configuration. You might be passing an object as a string parameter.`,
-                received_body: body
+                error: 'all_results is a string, not an object',
+                first_50: all_results.slice(0, 50),
+                debug
             }, { status: 400 });
         }
 
         for (const [key, results] of Object.entries(all_results || {})) {
             const category = categoryMap[key] || key.toUpperCase();
-
-            // Ensure results is an array before iterating
             const items = Array.isArray(results) ? results : [results];
+
+            debug[`${key}_count`] = items.length;
+            debug[`${key}_first`] = items[0] || null;
 
             for (const article of items) {
                 if (!article || typeof article !== 'object') continue;
@@ -56,8 +65,8 @@ export async function POST(request) {
         }
         await kv.set('newsletter:status', 'pending', { ex: 86400 });
 
-        return Response.json({ success: true, article_count: articles.length });
+        return Response.json({ success: true, article_count: articles.length, debug });
     } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ error: error.message, stack: error.stack?.slice(0, 200) }, { status: 500 });
     }
 }
