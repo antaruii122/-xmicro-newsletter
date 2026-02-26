@@ -192,18 +192,19 @@ body {
 /* Grid Layout for Cards */
 .article-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
     margin-top: 2rem;
 }
 
 .article-card {
     display: flex;
     flex-direction: column;
+    min-height: 280px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.75rem;
-    padding: 1.25rem;
+    padding: 1.5rem;
     transition: all 0.2s ease;
     position: relative;
     cursor: pointer;
