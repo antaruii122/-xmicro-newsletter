@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis'
+
 const kv = new Redis({
     url: process.env.KV_REST_API_URL,
     token: process.env.KV_REST_API_TOKEN,
@@ -6,66 +7,39 @@ const kv = new Redis({
 
 export async function POST(request) {
     try {
-        const rawText = await request.text();
+        // Read raw body - n8n sends it in various encodings, handle all cases
+        let text = await request.text();
 
-        let body;
-        try {
-            let parsed = JSON.parse(rawText);
-            // n8n double-encodes: JSON.stringify() result gets re-encoded by HTTP Request node
-            // So parsed may be a string that itself contains JSON — parse it again
-            if (typeof parsed === 'string') {
-                parsed = JSON.parse(parsed);
-            }
-            body = parsed;
-        } catch (parseErr) {
-            return Response.json({
-                error: 'Body is not valid JSON',
-                raw_first_100: rawText.slice(0, 100),
-                parse_error: parseErr.message
-            }, { status: 400 });
-        }
+        // n8n sometimes prepends "=" (URL-encoded form quirk) — strip it
+        text = text.trim();
+        if (text.startsWith('=')) text = text.slice(1);
 
-        const { all_results, total_articles, resume_url } = body;
+        // n8n sometimes double-encodes (JSON string inside a JSON string) — unwrap
+        let data = JSON.parse(text);
+        if (typeof data === 'string') data = JSON.parse(data);
 
+        // data.all_results is { dram_pricing: [...], nand_storage: [...], supply_chain: [...] }
+        const all_results = data.all_results || {};
+        const resume_url = data.resume_url || null;
+
+        // Flatten all categories into a simple list of { title, url }
         const articles = [];
-        const categoryMap = {
-            dram_pricing: 'DRAM',
-            nand_storage: 'NAND',
-            supply_chain: 'SUPPLY',
-        };
-
-        for (const [key, results] of Object.entries(all_results || {})) {
-            const category = categoryMap[key] || key.toUpperCase();
-            const items = Array.isArray(results) ? results : [results];
-
-            for (const article of items) {
-                if (!article || typeof article !== 'object') continue;
-
-                const articleUrl = article.url || 'https://unknown-url.com/' + Math.random();
-
-                articles.push({
-                    id: Buffer.from(articleUrl).toString('base64').slice(0, 16),
-                    headline: article.title || 'Sin título',
-                    summary: article.content || article.snippet || '',
-                    url: articleUrl,
-                    source: (() => { try { return new URL(articleUrl).hostname.replace('www.', ''); } catch { return ''; } })(),
-                    published_date: article.published_date || null,
-                    category,
-                    score: article.score || 0,
-                });
+        for (const [category, items] of Object.entries(all_results)) {
+            if (!Array.isArray(items)) continue;
+            for (const item of items) {
+                if (item && item.title && item.url) {
+                    articles.push({ title: item.title, url: item.url, category });
+                }
             }
         }
 
-        articles.sort((a, b) => b.score - a.score);
-
+        // Save to Redis
         await kv.set('newsletter:articles', JSON.stringify(articles), { ex: 86400 });
-        if (resume_url) {
-            await kv.set('newsletter:resume_url', resume_url, { ex: 86400 });
-        }
-        await kv.set('newsletter:status', 'pending', { ex: 86400 });
+        if (resume_url) await kv.set('newsletter:resume_url', resume_url, { ex: 86400 });
 
-        return Response.json({ success: true, article_count: articles.length });
-    } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        return Response.json({ success: true, count: articles.length });
+
+    } catch (err) {
+        return Response.json({ error: err.message }, { status: 500 });
     }
 }
