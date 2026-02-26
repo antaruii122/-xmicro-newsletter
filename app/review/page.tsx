@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 interface Article {
     title: string;
+    description?: string;
     url: string;
     category: string;
 }

@@ -276,6 +276,18 @@ body {
     text-decoration: underline;
 }
 
+.card-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
 .card-footer {
     margin-top: auto;
     display: flex;

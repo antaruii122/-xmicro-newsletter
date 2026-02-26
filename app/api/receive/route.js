@@ -70,13 +70,18 @@ export async function POST(request) {
             }, { status: 400 });
         }
 
-        // Flatten all categories into [{title, url, category}]
+        // Flatten all categories into [{title, description, url, category}]
         const articles = [];
         for (const [category, items] of Object.entries(data.all_results || {})) {
             if (!Array.isArray(items)) continue;
             for (const item of items) {
                 if (item && item.title && item.url) {
-                    articles.push({ title: item.title, url: item.url, category });
+                    articles.push({
+                        title: item.title,
+                        description: item.content || item.snippet || '',
+                        url: item.url,
+                        category
+                    });
                 }
             }
         }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 interface Article {
     title: string;
+    description?: string;
     url: string;
     category: string;
 }
@@ -204,6 +205,9 @@ export default function NewsletterDashboard() {
                                 >
                                     {article.title}
                                 </a>
+                                {article.description && (
+                                    <p className="card-description">{article.description}</p>
+                                )}
 
                                 <div className="card-footer">
                                     <span>
