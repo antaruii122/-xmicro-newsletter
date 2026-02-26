@@ -6,13 +6,17 @@ const kv = new Redis({
 
 export async function POST(request) {
     try {
-        // Read as text first so we can see EXACTLY what was sent
         const rawText = await request.text();
 
-        // Try to parse it
         let body;
         try {
-            body = JSON.parse(rawText);
+            let parsed = JSON.parse(rawText);
+            // n8n double-encodes: JSON.stringify() result gets re-encoded by HTTP Request node
+            // So parsed may be a string that itself contains JSON — parse it again
+            if (typeof parsed === 'string') {
+                parsed = JSON.parse(parsed);
+            }
+            body = parsed;
         } catch (parseErr) {
             return Response.json({
                 error: 'Body is not valid JSON',
@@ -29,14 +33,6 @@ export async function POST(request) {
             nand_storage: 'NAND',
             supply_chain: 'SUPPLY',
         };
-
-        if (typeof all_results === 'string') {
-            return Response.json({
-                error: 'all_results is a string not an object',
-                first_100: all_results.slice(0, 100),
-                body_keys: Object.keys(body)
-            }, { status: 400 });
-        }
 
         for (const [key, results] of Object.entries(all_results || {})) {
             const category = categoryMap[key] || key.toUpperCase();
@@ -68,13 +64,7 @@ export async function POST(request) {
         }
         await kv.set('newsletter:status', 'pending', { ex: 86400 });
 
-        return Response.json({
-            success: true,
-            article_count: articles.length,
-            body_keys: Object.keys(body),
-            all_results_keys: all_results ? Object.keys(all_results) : [],
-            raw_first_80: rawText.slice(0, 80)
-        });
+        return Response.json({ success: true, article_count: articles.length });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
