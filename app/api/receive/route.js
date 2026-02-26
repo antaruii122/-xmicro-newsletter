@@ -43,16 +43,20 @@ export async function POST(request) {
 
         for (const strategy of strategies) {
             try {
-                const result = strategy();
+                let result = strategy();
+
+                // If the result is a string, it means n8n sent the body as a JSON-escaped string
+                // Example: `"={\"all_results\":...}"` -> JSON.parse -> `={"all_results":...}`
+                // We must strip the leading '=' from this inner string and parse again!
+                if (typeof result === 'string') {
+                    const innerText = result.trim().replace(/^=+/, '');
+                    result = JSON.parse(innerText);
+                }
+
                 // Make sure we actually got an object with all_results
                 if (result && typeof result === 'object' && result.all_results) {
                     data = result;
                     break;
-                }
-                // Handle double-encoded (JSON string inside JSON string)
-                if (typeof result === 'string') {
-                    const inner = JSON.parse(result);
-                    if (inner && inner.all_results) { data = inner; break; }
                 }
             } catch (_) {
                 // Try next strategy
