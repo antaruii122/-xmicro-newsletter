@@ -197,90 +197,96 @@ export default function NewsletterDashboard() {
     return (
         <div className="dashboard-wrapper">
             {/* ── Left Sidebar ── */}
-            <aside className="sidebar" style={{ width: sidebarOpen ? '260px' : '28px', transition: 'width 0.25s ease', overflow: 'visible', position: 'relative' }}>
-                {/* Vertical tab toggle — pinned to the right edge */}
-                <button
-                    onClick={toggleSidebar}
-                    title={sidebarOpen ? 'Ocultar guía' : 'Mostrar guía'}
-                    style={{
-                        position: 'absolute',
-                        right: '-18px',
-                        top: '50%',
-                        transform: 'translateY(-50%) rotate(90deg)',
-                        background: 'var(--accent)',
-                        border: 'none',
-                        borderRadius: '0 0 6px 6px',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        padding: '6px 14px',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.06em',
-                        whiteSpace: 'nowrap',
-                        zIndex: 100,
-                        boxShadow: '0 2px 8px rgba(56,189,248,0.4)',
-                    }}
-                >
-                    {sidebarOpen ? '▲ OCULTAR GUÍA' : '▼ GUÍA'}
-                </button>
-                <div className="sidebar-logo">X-Micro</div>
-                <div className="sidebar-subtitle">Market Intelligence</div>
+            <aside className="sidebar" style={{
+                width: sidebarOpen ? '260px' : '0',
+                minWidth: sidebarOpen ? '260px' : '0',
+                transition: 'width 0.25s ease, min-width 0.25s ease',
+                overflow: 'hidden',
+                borderRight: sidebarOpen ? '1px solid var(--border)' : 'none',
+            }}>
+                <div style={{ width: '260px', padding: '1.25rem 0.75rem' }}>
+                    <div className="sidebar-logo">X-Micro</div>
+                    <div className="sidebar-subtitle">Market Intelligence</div>
 
-                <div className="sidebar-section-title">Cómo usar</div>
-                <div className="sidebar-steps">
-                    <div className="sidebar-step">
-                        <div className="sidebar-step-num">1</div>
-                        <div className="sidebar-step-text">
-                            Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria DRAM y NAND.
+                    <div className="sidebar-section-title">Cómo usar</div>
+                    <div className="sidebar-steps">
+                        <div className="sidebar-step">
+                            <div className="sidebar-step-num">1</div>
+                            <div className="sidebar-step-text">
+                                Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria DRAM y NAND.
+                            </div>
+                        </div>
+                        <div className="sidebar-step">
+                            <div className="sidebar-step-num">2</div>
+                            <div className="sidebar-step-text">
+                                <strong>Selecciona</strong> las noticias que quieres incluir en el newsletter haciendo clic en cada tarjeta.
+                            </div>
+                        </div>
+                        <div className="sidebar-step">
+                            <div className="sidebar-step-num">3</div>
+                            <div className="sidebar-step-text">
+                                Haz clic en <strong>Revisar y Generar →</strong> en la barra inferior para continuar.
+                            </div>
+                        </div>
+                        <div className="sidebar-step">
+                            <div className="sidebar-step-num">4</div>
+                            <div className="sidebar-step-text">
+                                En la siguiente pantalla puedes <strong>ver una vista previa</strong> del correo o enviarlo directamente.
+                            </div>
                         </div>
                     </div>
-                    <div className="sidebar-step">
-                        <div className="sidebar-step-num">2</div>
-                        <div className="sidebar-step-text">
-                            <strong>Selecciona</strong> las noticias que quieres incluir en el newsletter haciendo clic en cada tarjeta.
-                        </div>
-                    </div>
-                    <div className="sidebar-step">
-                        <div className="sidebar-step-num">3</div>
-                        <div className="sidebar-step-text">
-                            Haz clic en <strong>Revisar y Generar →</strong> en la barra inferior para continuar.
-                        </div>
-                    </div>
-                    <div className="sidebar-step">
-                        <div className="sidebar-step-num">4</div>
-                        <div className="sidebar-step-text">
-                            En la siguiente pantalla puedes <strong>ver una vista previa</strong> del correo o enviarlo directamente.
-                        </div>
-                    </div>
-                </div>
 
-                <hr className="sidebar-divider" />
+                    <hr className="sidebar-divider" />
 
-                <div className="sidebar-section-title">Acciones</div>
-                <div className="sidebar-steps">
-                    <div className="sidebar-step">
-                        <div className="sidebar-step-num" style={{ background: 'var(--accent)' }}>📡</div>
-                        <div className="sidebar-step-text">
-                            <strong>Buscar Noticias</strong> — descarga noticias frescas del mercado. Tarda <strong>1-2 minutos</strong>.
+                    <div className="sidebar-section-title">Acciones</div>
+                    <div className="sidebar-steps">
+                        <div className="sidebar-step">
+                            <div className="sidebar-step-num" style={{ background: 'var(--accent)' }}>📡</div>
+                            <div className="sidebar-step-text">
+                                <strong>Buscar Noticias</strong> — descarga noticias frescas del mercado. Tarda <strong>1-2 minutos</strong>.
+                            </div>
+                        </div>
+                        <div className="sidebar-step">
+                            <div className="sidebar-step-num" style={{ background: 'var(--danger)' }}>🗑</div>
+                            <div className="sidebar-step-text">
+                                <strong>Borrar Todo</strong> — elimina todas las noticias del panel. Las nuevas que busques serán diferentes.
+                            </div>
                         </div>
                     </div>
-                    <div className="sidebar-step">
-                        <div className="sidebar-step-num" style={{ background: 'var(--danger)' }}>🗑</div>
-                        <div className="sidebar-step-text">
-                            <strong>Borrar Todo</strong> — elimina todas las noticias del panel. Las nuevas que busques serán diferentes.
-                        </div>
-                    </div>
-                </div>
 
-                <div className="sidebar-note">
-                    💡 Los títulos de las noticias son <strong>mejorados y traducidos al español</strong> por la IA — pueden diferir del original en inglés.
+                    <div className="sidebar-note">
+                        💡 Los títulos de las noticias son <strong>mejorados y traducidos al español</strong> por la IA — pueden diferir del original en inglés.
+                    </div>
                 </div>
             </aside>
 
             {/* ── Main Content ── */}
             <div className="dashboard-container">
                 <header className="header">
-                    <h1>X-Micro Market Intelligence</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <button
+                            onClick={toggleSidebar}
+                            title={sidebarOpen ? 'Ocultar guía' : 'Mostrar guía'}
+                            style={{
+                                background: 'var(--surface)',
+                                border: '1px solid var(--border)',
+                                borderRadius: '0.4rem',
+                                color: 'var(--text-primary)',
+                                cursor: 'pointer',
+                                width: '34px',
+                                height: '34px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '1rem',
+                                flexShrink: 0,
+                                transition: 'background 0.2s',
+                            }}
+                        >
+                            {sidebarOpen ? '✕' : '☰'}
+                        </button>
+                        <h1>X-Micro Market Intelligence</h1>
+                    </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button
                             className="action-btn danger"
