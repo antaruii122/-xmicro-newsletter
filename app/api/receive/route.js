@@ -70,10 +70,18 @@ export async function POST(request) {
             }, { status: 400 });
         }
 
+        // Normalize raw n8n category keys → display labels used by the filter buttons
+        const CATEGORY_MAP = {
+            dram_pricing: 'DRAM',
+            nand_storage: 'NAND',
+            supply_chain: 'SUPPLY',
+        };
+
         // Flatten all categories into [{title, description, url, category}]
         const articles = [];
-        for (const [category, items] of Object.entries(data.all_results || {})) {
+        for (const [rawCategory, items] of Object.entries(data.all_results || {})) {
             if (!Array.isArray(items)) continue;
+            const category = CATEGORY_MAP[rawCategory] || rawCategory.toUpperCase();
             for (const item of items) {
                 if (item && item.title && item.url) {
                     articles.push({

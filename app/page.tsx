@@ -134,8 +134,17 @@ export default function NewsletterDashboard() {
     };
 
     const filteredArticles = articles.filter(article => {
-        const matchesFilter = activeFilter === "ALL" || article.category === activeFilter;
-        const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter =
+            activeFilter === "ALL" ||
+            (article.category || "").toUpperCase() === activeFilter.toUpperCase();
+
+        const q = searchQuery.toLowerCase();
+        const matchesSearch =
+            !q ||
+            (article.title || "").toLowerCase().includes(q) ||
+            (article.description || "").toLowerCase().includes(q) ||
+            (article.url || "").toLowerCase().includes(q);
+
         return matchesFilter && matchesSearch;
     });
 
