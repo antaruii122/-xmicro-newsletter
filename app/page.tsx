@@ -28,7 +28,20 @@ export default function NewsletterDashboard() {
     const [activeFilter, setActiveFilter] = useState("ALL");
     const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
     const [expandedUrls, setExpandedUrls] = useState<Set<string>>(new Set());
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const fetchTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Persist sidebar state
+    useEffect(() => {
+        const saved = localStorage.getItem('sidebarOpen');
+        if (saved !== null) setSidebarOpen(saved === 'true');
+    }, []);
+
+    const toggleSidebar = () => {
+        const next = !sidebarOpen;
+        setSidebarOpen(next);
+        localStorage.setItem('sidebarOpen', String(next));
+    };
 
     useEffect(() => {
         fetchArticles();
@@ -184,7 +197,30 @@ export default function NewsletterDashboard() {
     return (
         <div className="dashboard-wrapper">
             {/* ── Left Sidebar ── */}
-            <aside className="sidebar">
+            <aside className="sidebar" style={{ width: sidebarOpen ? '260px' : '48px', transition: 'width 0.25s ease', overflow: 'hidden' }}>
+                {/* Toggle button always visible */}
+                <button
+                    onClick={toggleSidebar}
+                    title={sidebarOpen ? 'Ocultar guía' : 'Mostrar guía'}
+                    style={{
+                        background: 'transparent',
+                        border: '1px solid var(--border)',
+                        borderRadius: '0.4rem',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        padding: '0.3rem 0.5rem',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        marginBottom: sidebarOpen ? '1.25rem' : '0',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.2s',
+                        width: '100%',
+                    }}
+                >
+                    {sidebarOpen ? '◀ Ocultar guía' : '▶'}
+                </button>
                 <div className="sidebar-logo">X-Micro</div>
                 <div className="sidebar-subtitle">Market Intelligence</div>
 

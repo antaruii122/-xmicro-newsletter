@@ -58,13 +58,14 @@ body {
 .sidebar {
     width: 260px;
     flex-shrink: 0;
-    padding: 2rem 1.25rem;
+    padding: 1.25rem 0.75rem;
     border-right: 1px solid var(--border);
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
+    overflow: hidden;
     background: var(--background);
+    transition: width 0.25s ease;
 }
 
 .sidebar-logo {
