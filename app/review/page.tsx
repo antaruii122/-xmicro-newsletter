@@ -64,11 +64,11 @@ export default function ReviewPage() {
                 sessionStorage.removeItem("selectedArticles");
                 router.push("/");
             } else {
-                alert(`Error: ${data.error || "Failed to submit."}`);
+                alert(`Error: ${data.error || "Falló el envío."}`);
             }
         } catch (err) {
             console.error("Submission error:", err);
-            alert("An error occurred while submitting.");
+            alert("Ocurrió un error al enviar. Intenta de nuevo.");
         } finally {
             setIsGenerating(false);
         }
@@ -88,13 +88,13 @@ export default function ReviewPage() {
             });
             if (!res.ok) {
                 const data = await res.json();
-                alert(`Error: ${data.error || "Failed to request preview."}`);
+                alert(`Error: ${data.error || "Falló la solicitud de vista previa."}`);
                 stopProgress();
                 return;
             }
         } catch (err) {
             console.error("Preview request error:", err);
-            alert("An error occurred while requesting the preview.");
+            alert("Ocurrió un error al solicitar la vista previa.");
             stopProgress();
             return;
         }
@@ -131,8 +131,6 @@ export default function ReviewPage() {
         }
     };
 
-
-
     return (
         <div className="review-container">
             <header className="header" style={{ marginBottom: "1rem" }}>
@@ -142,26 +140,45 @@ export default function ReviewPage() {
                         onClick={() => router.push("/")}
                         style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem", marginBottom: "1rem" }}
                     >
-                        ← Back to Dashboard
+                        ← Volver al Panel
                     </button>
-                    <h1>Review Selections</h1>
+                    <h1>Revisar y Generar Newsletter</h1>
                 </div>
             </header>
 
+            {/* ── How to use ── */}
+            <div style={{
+                background: "linear-gradient(135deg, rgba(56,189,248,0.07), rgba(139,92,246,0.07))",
+                border: "1px solid rgba(56,189,248,0.25)",
+                borderRadius: "0.75rem",
+                padding: "1.25rem 1.5rem",
+                marginBottom: "1.5rem"
+            }}>
+                <p style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--accent)", marginBottom: "0.75rem", letterSpacing: "0.05em" }}>
+                    ℹ️ CÓMO USAR ESTA PÁGINA
+                </p>
+                <ol style={{ paddingLeft: "1.25rem", display: "flex", flexDirection: "column", gap: "0.4rem", color: "var(--text-secondary)", fontSize: "0.88rem", lineHeight: "1.5" }}>
+                    <li>Revisa las noticias que seleccionaste. Puedes <strong style={{ color: "var(--text-primary)" }}>eliminar</strong> alguna si no te convence.</li>
+                    <li>Haz clic en <strong style={{ color: "var(--accent)" }}>👁 Vista Previa HTML</strong> para ver cómo quedará el correo antes de enviarlo. Esto puede tardar <strong style={{ color: "var(--text-primary)" }}>1-2 minutos</strong> mientras la IA genera el contenido.</li>
+                    <li>Si la vista previa se ve bien, haz clic en <strong style={{ color: "#22c55e" }}>✉ Generar y Enviar</strong> para mandar el newsletter a tu correo.</li>
+                    <li>Nota: el título de cada artículo puede cambiar ligeramente — la IA lo mejora y traduce al español automáticamente.</li>
+                </ol>
+            </div>
+
             {selectedArticles.length === 0 ? (
                 <div style={{ padding: "4rem", textAlign: "center", background: "var(--surface)", borderRadius: "0.5rem" }}>
-                    <h3 style={{ marginBottom: "0.5rem" }}>No articles selected</h3>
+                    <h3 style={{ marginBottom: "0.5rem" }}>No hay noticias seleccionadas</h3>
                     <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
-                        Go back to the dashboard to select some articles for the newsletter.
+                        Vuelve al panel y selecciona las noticias que quieres incluir en el newsletter.
                     </p>
                     <button className="action-btn" onClick={() => router.push("/")}>
-                        ← Back to Dashboard
+                        ← Volver al Panel
                     </button>
                 </div>
             ) : (
                 <div className="review-list">
                     <p style={{ color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
-                        You have selected <strong>{selectedArticles.length}</strong> articles for generation.
+                        Tienes <strong>{selectedArticles.length}</strong> {selectedArticles.length === 1 ? "noticia seleccionada" : "noticias seleccionadas"} para el newsletter.
                     </p>
 
                     {selectedArticles.map((article, i) => (
@@ -186,8 +203,8 @@ export default function ReviewPage() {
                                     </span>
                                 </div>
                             </div>
-                            <button className="remove-btn" onClick={() => removeArticle(article.url)} title="Remove from selection">
-                                Remove
+                            <button className="remove-btn" onClick={() => removeArticle(article.url)} title="Quitar de la selección">
+                                Quitar
                             </button>
                         </div>
                     ))}
@@ -197,10 +214,10 @@ export default function ReviewPage() {
                         <div className="progress-panel">
                             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                                 <span className="spinner" style={{ width: 20, height: 20, borderWidth: 3 }} />
-                                <span style={{ fontWeight: 700, fontSize: "1rem" }}>Generating HTML Preview…</span>
+                                <span style={{ fontWeight: 700, fontSize: "1rem" }}>Generando Vista Previa HTML…</span>
                             </div>
                             <p style={{ margin: "0.75rem 0 0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                                ⏳ The AI is working on it — this can take a few minutes. Hang tight, the preview will appear automatically.
+                                ⏳ La IA está trabajando — esto puede tardar unos minutos. La vista previa aparecerá automáticamente cuando esté lista.
                             </p>
                         </div>
                     )}
@@ -215,7 +232,7 @@ export default function ReviewPage() {
                             }}
                             disabled={isPreviewing || isGenerating}
                         >
-                            Clear All
+                            🗑 Limpiar Selección
                         </button>
 
                         <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -223,10 +240,11 @@ export default function ReviewPage() {
                                 className={`action-btn preview-btn${isPreviewing ? " loading" : ""}`}
                                 onClick={handlePreview}
                                 disabled={isPreviewing || isGenerating || selectedArticles.length === 0}
+                                title="Genera una vista previa del correo HTML antes de enviarlo"
                             >
                                 {isPreviewing
                                     ? <><span className="spinner" /> Generando…</>
-                                    : <>&#128065; Ver HTML</>
+                                    : <>&#128065; Vista Previa HTML</>
                                 }
                             </button>
 
@@ -234,10 +252,11 @@ export default function ReviewPage() {
                                 className="action-btn success generate-btn"
                                 onClick={handleGenerate}
                                 disabled={isGenerating || isPreviewing || selectedArticles.length === 0}
+                                title="Genera el newsletter y lo envía a tu correo electrónico"
                             >
                                 {isGenerating
                                     ? <><span className="spinner" /> Enviando…</>
-                                    : <>&#9993; Generar Newsletter ({selectedArticles.length})</>
+                                    : <>&#9993; Generar y Enviar ({selectedArticles.length})</>
                                 }
                             </button>
                         </div>
@@ -284,14 +303,14 @@ function PreviewTabs({ html }: { html: string }) {
         <>
             <div className="tab-bar">
                 <button className={`tab-btn${tab === "preview" ? " active" : ""}`} onClick={() => setTab("preview")}>
-                    Rendered Preview
+                    Vista Renderizada
                 </button>
                 <button className={`tab-btn${tab === "code" ? " active" : ""}`} onClick={() => setTab("code")}>
-                    HTML Code
+                    Código HTML
                 </button>
             </div>
             {tab === "preview"
-                ? <iframe srcDoc={html} className="modal-iframe" title="Newsletter Preview" sandbox="allow-same-origin" />
+                ? <iframe srcDoc={html} className="modal-iframe" title="Vista Previa Newsletter" sandbox="allow-same-origin" />
                 : <pre className="html-code-block">{html}</pre>
             }
         </>

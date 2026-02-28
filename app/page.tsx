@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const FETCH_STEPS = [
-    { label: "Triggering market data search...", activeAt: 0 },
-    { label: "Searching DRAM, NAND & supply chain...", activeAt: 6 },
-    { label: "AI filtering & cleaning results...", activeAt: 22 },
-    { label: "Sending data to your dashboard...", activeAt: 48 },
+    { label: "Iniciando búsqueda de datos de mercado...", activeAt: 0 },
+    { label: "Buscando noticias de DRAM, NAND y cadena de suministro...", activeAt: 6 },
+    { label: "La IA está filtrando y limpiando los resultados...", activeAt: 22 },
+    { label: "Enviando datos al panel de control...", activeAt: 48 },
 ];
 const FETCH_ESTIMATED = 70;
 
@@ -30,7 +30,6 @@ export default function NewsletterDashboard() {
     const [expandedUrls, setExpandedUrls] = useState<Set<string>>(new Set());
     const fetchTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Load articles from Redis and previous selections from sessionStorage on mount
     useEffect(() => {
         fetchArticles();
         const savedSelections = sessionStorage.getItem("selectedArticles");
@@ -46,14 +45,12 @@ export default function NewsletterDashboard() {
         return () => { if (fetchTimerRef.current) clearInterval(fetchTimerRef.current); };
     }, []);
 
-    // Advance fetch step based on elapsed time
     useEffect(() => {
         if (!loading) return;
         const step = [...FETCH_STEPS].reverse().find(s => fetchElapsed >= s.activeAt);
         if (step) setFetchStep(FETCH_STEPS.indexOf(step));
     }, [fetchElapsed, loading]);
 
-    // Save selections whenever they change
     useEffect(() => {
         const selectedArticles = articles.filter(a => selectedUrls.has(a.url));
         if (selectedArticles.length > 0) {
@@ -77,7 +74,7 @@ export default function NewsletterDashboard() {
     };
 
     const handleClearNews = async () => {
-        if (!confirm("Are you sure you want to clear all fetched articles?")) return;
+        if (!confirm("¿Estás seguro de que quieres borrar todas las noticias? Se eliminarán del panel y tendrás que buscar nuevamente.")) return;
         setLoading(true);
         try {
             const res = await fetch("/api/clear", { method: "POST" });
@@ -100,7 +97,6 @@ export default function NewsletterDashboard() {
         setFetchElapsed(0);
         setFetchStep(0);
 
-        // Start elapsed timer
         const startTime = Date.now();
         fetchTimerRef.current = setInterval(() => {
             setFetchElapsed(Math.floor((Date.now() - startTime) / 1000));
@@ -133,7 +129,7 @@ export default function NewsletterDashboard() {
                 if (Date.now() - pollStart > 120000) {
                     clearInterval(poll);
                     stopFetch();
-                    alert("⏱ Fetch timed out. n8n took too long.");
+                    alert("⏱ La búsqueda tardó demasiado. Intenta de nuevo.");
                 }
             }, 4000);
         } catch (err) {
@@ -194,23 +190,25 @@ export default function NewsletterDashboard() {
                         className="action-btn danger"
                         onClick={handleClearNews}
                         disabled={loading || articles.length === 0}
+                        title="Elimina todas las noticias del panel. Podrás buscar nuevas después."
                     >
-                        Clear All Data
+                        🗑 Borrar Todo
                     </button>
                     <button
                         className="fetch-btn"
                         onClick={handleFetchNews}
                         disabled={loading}
+                        title="Busca las últimas noticias del mercado de memoria. Puede tomar 1-2 minutos."
                     >
                         {loading ? (
                             <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Fetching Latest...
+                                Buscando noticias...
                             </>
-                        ) : "Fetch Market News"}
+                        ) : "📡 Buscar Noticias"}
                     </button>
                 </div>
             </header>
@@ -221,10 +219,10 @@ export default function NewsletterDashboard() {
                     <div className="progress-panel-header">
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                             <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />
-                            <span style={{ fontWeight: 700, fontSize: "1rem" }}>Fetching Market Intelligence</span>
+                            <span style={{ fontWeight: 700, fontSize: "1rem" }}>Buscando inteligencia de mercado…</span>
                         </div>
                         <span className="progress-timer">
-                            {fetchElapsed}s elapsed · ~{Math.max(0, FETCH_ESTIMATED - fetchElapsed)}s remaining
+                            {fetchElapsed}s transcurridos · ~{Math.max(0, FETCH_ESTIMATED - fetchElapsed)}s restantes
                         </span>
                     </div>
                     <div className="progress-bar-track">
@@ -251,7 +249,7 @@ export default function NewsletterDashboard() {
                 <input
                     type="text"
                     className="search-input"
-                    placeholder="Search headlines..."
+                    placeholder="Buscar noticias..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -262,7 +260,7 @@ export default function NewsletterDashboard() {
                             className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
                             onClick={() => setActiveFilter(filter)}
                         >
-                            {filter}
+                            {filter === "ALL" ? "TODAS" : filter}
                         </button>
                     ))}
                 </div>
@@ -275,19 +273,20 @@ export default function NewsletterDashboard() {
                         className="action-btn secondary"
                         style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }}
                     >
-                        {filteredArticles.every(a => selectedUrls.has(a.url)) ? "Deselect All Visible" : "Select All Visible"}
+                        {filteredArticles.every(a => selectedUrls.has(a.url)) ? "Deseleccionar Visibles" : "Seleccionar Visibles"}
                     </button>
                 </div>
             )}
 
             {articles.length === 0 ? (
                 <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--text-secondary)", background: "var(--surface)", borderRadius: "0.5rem", marginTop: "2rem", border: "1px dashed var(--border)" }}>
-                    <p style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>No market data loaded.</p>
-                    <p style={{ fontSize: "0.85rem" }}>Click "Fetch Market News" to grab the latest intelligence.</p>
+                    <p style={{ fontSize: "1.3rem", marginBottom: "0.75rem" }}>📭 No hay noticias cargadas</p>
+                    <p style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria.</p>
+                    <p style={{ fontSize: "0.82rem", opacity: 0.6 }}>⏳ Este proceso puede tardar entre 1 y 2 minutos — la IA busca, filtra y organiza la información automáticamente.</p>
                 </div>
             ) : filteredArticles.length === 0 ? (
                 <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-secondary)" }}>
-                    No articles match your filters.
+                    Ningún artículo coincide con los filtros seleccionados.
                 </div>
             ) : (
                 <div className="article-grid">
@@ -325,7 +324,7 @@ export default function NewsletterDashboard() {
                                     <p className="card-description">{article.description}</p>
                                 ) : (
                                     <p className="card-description" style={{ fontStyle: 'italic', opacity: 0.5, color: 'var(--text-secondary)' }}>
-                                        No text provided by source.
+                                        Sin descripción disponible.
                                     </p>
                                 )}
 
@@ -346,7 +345,7 @@ export default function NewsletterDashboard() {
                                         className="expand-btn"
                                         onClick={(e) => toggleExpand(article.url, e)}
                                     >
-                                        {isExpanded ? 'Collapse ▲' : 'Expand ▼'}
+                                        {isExpanded ? 'Contraer ▲' : 'Expandir ▼'}
                                     </button>
                                 </div>
                             </div>
@@ -359,13 +358,18 @@ export default function NewsletterDashboard() {
             <div className="action-bar" style={{ transform: selectedUrls.size > 0 ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
                 <div className="selection-info">
                     <span className="pill">{selectedUrls.size}</span>
-                    <span>Article{selectedUrls.size !== 1 ? 's' : ''} Selected</span>
+                    <span>
+                        {selectedUrls.size === 1 ? 'noticia seleccionada' : 'noticias seleccionadas'}
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                            — la IA las usará para crear el correo final
+                        </span>
+                    </span>
                 </div>
                 <button
                     className="action-btn success"
                     onClick={() => router.push('/review')}
                 >
-                    Review Selections &rarr;
+                    Revisar y Generar →
                 </button>
             </div>
         </div>
