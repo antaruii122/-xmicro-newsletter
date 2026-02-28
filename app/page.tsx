@@ -182,195 +182,254 @@ export default function NewsletterDashboard() {
     });
 
     return (
-        <div className="dashboard-container">
-            <header className="header">
-                <h1>X-Micro Market Intelligence</h1>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button
-                        className="action-btn danger"
-                        onClick={handleClearNews}
-                        disabled={loading || articles.length === 0}
-                        title="Elimina todas las noticias del panel. Podrás buscar nuevas después."
-                    >
-                        🗑 Borrar Todo
-                    </button>
-                    <button
-                        className="fetch-btn"
-                        onClick={handleFetchNews}
-                        disabled={loading}
-                        title="Busca las últimas noticias del mercado de memoria. Puede tomar 1-2 minutos."
-                    >
-                        {loading ? (
-                            <>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Buscando noticias...
-                            </>
-                        ) : "📡 Buscar Noticias"}
-                    </button>
-                </div>
-            </header>
+        <div className="dashboard-wrapper">
+            {/* ── Left Sidebar ── */}
+            <aside className="sidebar">
+                <div className="sidebar-logo">X-Micro</div>
+                <div className="sidebar-subtitle">Market Intelligence</div>
 
-            {/* ── Fetch Progress Panel ── */}
-            {loading && (
-                <div className="progress-panel" style={{ marginBottom: "1.5rem" }}>
-                    <div className="progress-panel-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                            <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />
-                            <span style={{ fontWeight: 700, fontSize: "1rem" }}>Buscando inteligencia de mercado…</span>
+                <div className="sidebar-section-title">Cómo usar</div>
+                <div className="sidebar-steps">
+                    <div className="sidebar-step">
+                        <div className="sidebar-step-num">1</div>
+                        <div className="sidebar-step-text">
+                            Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria DRAM y NAND.
                         </div>
-                        <span className="progress-timer">
-                            {fetchElapsed}s transcurridos · ~{Math.max(0, FETCH_ESTIMATED - fetchElapsed)}s restantes
-                        </span>
                     </div>
-                    <div className="progress-bar-track">
-                        <div className="progress-bar-fill" style={{ width: `${Math.min((fetchElapsed / FETCH_ESTIMATED) * 100, 95)}%` }} />
+                    <div className="sidebar-step">
+                        <div className="sidebar-step-num">2</div>
+                        <div className="sidebar-step-text">
+                            <strong>Selecciona</strong> las noticias que quieres incluir en el newsletter haciendo clic en cada tarjeta.
+                        </div>
                     </div>
-                    <div className="progress-steps">
-                        {FETCH_STEPS.map((step, i) => {
-                            const done = i < fetchStep;
-                            const active = i === fetchStep;
-                            return (
-                                <div key={i} className={`progress-step ${done ? "done" : active ? "active" : "pending"}`}>
-                                    <div className="step-dot">
-                                        {done ? "✓" : active ? <span className="spinner step-spinner" /> : i + 1}
+                    <div className="sidebar-step">
+                        <div className="sidebar-step-num">3</div>
+                        <div className="sidebar-step-text">
+                            Haz clic en <strong>Revisar y Generar →</strong> en la barra inferior para continuar.
+                        </div>
+                    </div>
+                    <div className="sidebar-step">
+                        <div className="sidebar-step-num">4</div>
+                        <div className="sidebar-step-text">
+                            En la siguiente pantalla puedes <strong>ver una vista previa</strong> del correo o enviarlo directamente.
+                        </div>
+                    </div>
+                </div>
+
+                <hr className="sidebar-divider" />
+
+                <div className="sidebar-section-title">Acciones</div>
+                <div className="sidebar-steps">
+                    <div className="sidebar-step">
+                        <div className="sidebar-step-num" style={{ background: 'var(--accent)' }}>📡</div>
+                        <div className="sidebar-step-text">
+                            <strong>Buscar Noticias</strong> — descarga noticias frescas del mercado. Tarda <strong>1-2 minutos</strong>.
+                        </div>
+                    </div>
+                    <div className="sidebar-step">
+                        <div className="sidebar-step-num" style={{ background: 'var(--danger)' }}>🗑</div>
+                        <div className="sidebar-step-text">
+                            <strong>Borrar Todo</strong> — elimina todas las noticias del panel. Las nuevas que busques serán diferentes.
+                        </div>
+                    </div>
+                </div>
+
+                <div className="sidebar-note">
+                    💡 Los títulos de las noticias son <strong>mejorados y traducidos al español</strong> por la IA — pueden diferir del original en inglés.
+                </div>
+            </aside>
+
+            {/* ── Main Content ── */}
+            <div className="dashboard-container">
+                <header className="header">
+                    <h1>X-Micro Market Intelligence</h1>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button
+                            className="action-btn danger"
+                            onClick={handleClearNews}
+                            disabled={loading || articles.length === 0}
+                            title="Elimina todas las noticias del panel. Podrás buscar nuevas después."
+                        >
+                            🗑 Borrar Todo
+                        </button>
+                        <button
+                            className="fetch-btn"
+                            onClick={handleFetchNews}
+                            disabled={loading}
+                            title="Busca las últimas noticias del mercado de memoria. Puede tomar 1-2 minutos."
+                        >
+                            {loading ? (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Buscando noticias...
+                                </>
+                            ) : "📡 Buscar Noticias"}
+                        </button>
+                    </div>
+                </header>
+
+                {/* ── Fetch Progress Panel ── */}
+                {loading && (
+                    <div className="progress-panel" style={{ marginBottom: "1.5rem" }}>
+                        <div className="progress-panel-header">
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                                <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />
+                                <span style={{ fontWeight: 700, fontSize: "1rem" }}>Buscando inteligencia de mercado…</span>
+                            </div>
+                            <span className="progress-timer">
+                                {fetchElapsed}s transcurridos · ~{Math.max(0, FETCH_ESTIMATED - fetchElapsed)}s restantes
+                            </span>
+                        </div>
+                        <div className="progress-bar-track">
+                            <div className="progress-bar-fill" style={{ width: `${Math.min((fetchElapsed / FETCH_ESTIMATED) * 100, 95)}%` }} />
+                        </div>
+                        <div className="progress-steps">
+                            {FETCH_STEPS.map((step, i) => {
+                                const done = i < fetchStep;
+                                const active = i === fetchStep;
+                                return (
+                                    <div key={i} className={`progress-step ${done ? "done" : active ? "active" : "pending"}`}>
+                                        <div className="step-dot">
+                                            {done ? "✓" : active ? <span className="spinner step-spinner" /> : i + 1}
+                                        </div>
+                                        <span>{step.label}</span>
                                     </div>
-                                    <span>{step.label}</span>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                <div className="controls">
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Buscar noticias..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <div className="filter-group">
+                        {["ALL", "DRAM", "NAND", "SUPPLY"].map(filter => (
+                            <button
+                                key={filter}
+                                className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
+                                onClick={() => setActiveFilter(filter)}
+                            >
+                                {filter === "ALL" ? "TODAS" : filter}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {articles.length > 0 && (
+                    <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
+                        <button
+                            onClick={toggleAllVisible}
+                            className="action-btn secondary"
+                            style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }}
+                        >
+                            {filteredArticles.every(a => selectedUrls.has(a.url)) ? "Deseleccionar Visibles" : "Seleccionar Visibles"}
+                        </button>
+                    </div>
+                )}
+
+                {articles.length === 0 ? (
+                    <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--text-secondary)", background: "var(--surface)", borderRadius: "0.5rem", marginTop: "2rem", border: "1px dashed var(--border)" }}>
+                        <p style={{ fontSize: "1.3rem", marginBottom: "0.75rem" }}>📭 No hay noticias cargadas</p>
+                        <p style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria.</p>
+                        <p style={{ fontSize: "0.82rem", opacity: 0.6 }}>⏳ Este proceso puede tardar entre 1 y 2 minutos — la IA busca, filtra y organiza la información automáticamente.</p>
+                    </div>
+                ) : filteredArticles.length === 0 ? (
+                    <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-secondary)" }}>
+                        Ningún artículo coincide con los filtros seleccionados.
+                    </div>
+                ) : (
+                    <div className="article-grid">
+                        {filteredArticles.map((article, i) => {
+                            const isSelected = selectedUrls.has(article.url);
+                            const isExpanded = expandedUrls.has(article.url);
+                            return (
+                                <div
+                                    key={i}
+                                    className={`article-card ${isSelected ? 'selected' : ''} ${isExpanded ? 'expanded' : ''}`}
+                                    onClick={() => toggleSelection(article.url)}
+                                >
+                                    <div className="card-header">
+                                        <span className={`tag ${article.category || 'GENERAL'}`}>
+                                            {article.category || 'NEWS'}
+                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            className="card-checkbox"
+                                            checked={isSelected}
+                                            readOnly
+                                        />
+                                    </div>
+
+                                    <a
+                                        href={article.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="card-title"
+                                        onClick={e => e.stopPropagation()}
+                                    >
+                                        {article.title}
+                                    </a>
+                                    {article.description ? (
+                                        <p className="card-description">{article.description}</p>
+                                    ) : (
+                                        <p className="card-description" style={{ fontStyle: 'italic', opacity: 0.5, color: 'var(--text-secondary)' }}>
+                                            Sin descripción disponible.
+                                        </p>
+                                    )}
+
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                                        <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                                            {article.url}
+                                        </a>
+                                    </div>
+
+                                    <div className="card-footer">
+                                        <span>
+                                            {(() => {
+                                                try { return new URL(article.url).hostname.replace("www.", ""); }
+                                                catch { return "link"; }
+                                            })()}
+                                        </span>
+                                        <button
+                                            className="expand-btn"
+                                            onClick={(e) => toggleExpand(article.url, e)}
+                                        >
+                                            {isExpanded ? 'Contraer ▲' : 'Expandir ▼'}
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}
                     </div>
-                </div>
-            )}
+                )}
 
-            <div className="controls">
-                <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Buscar noticias..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <div className="filter-group">
-                    {["ALL", "DRAM", "NAND", "SUPPLY"].map(filter => (
-                        <button
-                            key={filter}
-                            className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
-                            onClick={() => setActiveFilter(filter)}
-                        >
-                            {filter === "ALL" ? "TODAS" : filter}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {articles.length > 0 && (
-                <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end" }}>
+                {/* Sticky Bottom Bar */}
+                <div className="action-bar" style={{ transform: selectedUrls.size > 0 ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                    <div className="selection-info">
+                        <span className="pill">{selectedUrls.size}</span>
+                        <span>
+                            {selectedUrls.size === 1 ? 'noticia seleccionada' : 'noticias seleccionadas'}
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                                — la IA las usará para crear el correo final
+                            </span>
+                        </span>
+                    </div>
                     <button
-                        onClick={toggleAllVisible}
-                        className="action-btn secondary"
-                        style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }}
+                        className="action-btn success"
+                        onClick={() => router.push('/review')}
                     >
-                        {filteredArticles.every(a => selectedUrls.has(a.url)) ? "Deseleccionar Visibles" : "Seleccionar Visibles"}
+                        Revisar y Generar →
                     </button>
                 </div>
-            )}
-
-            {articles.length === 0 ? (
-                <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--text-secondary)", background: "var(--surface)", borderRadius: "0.5rem", marginTop: "2rem", border: "1px dashed var(--border)" }}>
-                    <p style={{ fontSize: "1.3rem", marginBottom: "0.75rem" }}>📭 No hay noticias cargadas</p>
-                    <p style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria.</p>
-                    <p style={{ fontSize: "0.82rem", opacity: 0.6 }}>⏳ Este proceso puede tardar entre 1 y 2 minutos — la IA busca, filtra y organiza la información automáticamente.</p>
-                </div>
-            ) : filteredArticles.length === 0 ? (
-                <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-secondary)" }}>
-                    Ningún artículo coincide con los filtros seleccionados.
-                </div>
-            ) : (
-                <div className="article-grid">
-                    {filteredArticles.map((article, i) => {
-                        const isSelected = selectedUrls.has(article.url);
-                        const isExpanded = expandedUrls.has(article.url);
-                        return (
-                            <div
-                                key={i}
-                                className={`article-card ${isSelected ? 'selected' : ''} ${isExpanded ? 'expanded' : ''}`}
-                                onClick={() => toggleSelection(article.url)}
-                            >
-                                <div className="card-header">
-                                    <span className={`tag ${article.category || 'GENERAL'}`}>
-                                        {article.category || 'NEWS'}
-                                    </span>
-                                    <input
-                                        type="checkbox"
-                                        className="card-checkbox"
-                                        checked={isSelected}
-                                        readOnly
-                                    />
-                                </div>
-
-                                <a
-                                    href={article.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="card-title"
-                                    onClick={e => e.stopPropagation()}
-                                >
-                                    {article.title}
-                                </a>
-                                {article.description ? (
-                                    <p className="card-description">{article.description}</p>
-                                ) : (
-                                    <p className="card-description" style={{ fontStyle: 'italic', opacity: 0.5, color: 'var(--text-secondary)' }}>
-                                        Sin descripción disponible.
-                                    </p>
-                                )}
-
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
-                                    <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
-                                        {article.url}
-                                    </a>
-                                </div>
-
-                                <div className="card-footer">
-                                    <span>
-                                        {(() => {
-                                            try { return new URL(article.url).hostname.replace("www.", ""); }
-                                            catch { return "link"; }
-                                        })()}
-                                    </span>
-                                    <button
-                                        className="expand-btn"
-                                        onClick={(e) => toggleExpand(article.url, e)}
-                                    >
-                                        {isExpanded ? 'Contraer ▲' : 'Expandir ▼'}
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Sticky Bottom Bar */}
-            <div className="action-bar" style={{ transform: selectedUrls.size > 0 ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                <div className="selection-info">
-                    <span className="pill">{selectedUrls.size}</span>
-                    <span>
-                        {selectedUrls.size === 1 ? 'noticia seleccionada' : 'noticias seleccionadas'}
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
-                            — la IA las usará para crear el correo final
-                        </span>
-                    </span>
-                </div>
-                <button
-                    className="action-btn success"
-                    onClick={() => router.push('/review')}
-                >
-                    Revisar y Generar →
-                </button>
             </div>
         </div>
     );
