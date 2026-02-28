@@ -198,15 +198,41 @@ export default function NewsletterDashboard() {
         <div className="dashboard-wrapper">
             {/* ── Left Sidebar ── */}
             <aside className="sidebar" style={{
-                width: sidebarOpen ? '260px' : '0',
-                minWidth: sidebarOpen ? '260px' : '0',
+                width: sidebarOpen ? '300px' : '0',
+                minWidth: sidebarOpen ? '300px' : '0',
                 transition: 'width 0.25s ease, min-width 0.25s ease',
                 overflow: 'hidden',
                 borderRight: sidebarOpen ? '1px solid var(--border)' : 'none',
             }}>
-                <div style={{ width: '260px', padding: '1.25rem 0.75rem' }}>
-                    <div className="sidebar-logo">X-Micro</div>
-                    <div className="sidebar-subtitle">Market Intelligence</div>
+                <div style={{ width: '300px', padding: '1.5rem 1.25rem' }}>
+                    {/* Sidebar header row: branding + close button */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <div>
+                            <div className="sidebar-logo">X-Micro</div>
+                            <div className="sidebar-subtitle">Market Intelligence</div>
+                        </div>
+                        <button
+                            onClick={toggleSidebar}
+                            title="Ocultar panel de guía"
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--border)',
+                                borderRadius: '0.4rem',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                padding: '0.3rem 0.6rem',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s',
+                            }}
+                        >
+                            ◄ Cerrar
+                        </button>
+                    </div>
 
                     <div className="sidebar-section-title">Cómo usar</div>
                     <div className="sidebar-steps">
@@ -263,55 +289,54 @@ export default function NewsletterDashboard() {
             {/* ── Main Content ── */}
             <div className="dashboard-container">
                 <header className="header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <button
-                            onClick={toggleSidebar}
-                            title={sidebarOpen ? 'Ocultar guía' : 'Mostrar guía'}
-                            style={{
-                                background: 'var(--surface)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '0.4rem',
-                                color: 'var(--text-primary)',
-                                cursor: 'pointer',
-                                width: '34px',
-                                height: '34px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1rem',
-                                flexShrink: 0,
-                                transition: 'background 0.2s',
-                            }}
-                        >
-                            {sidebarOpen ? '✕' : '☰'}
-                        </button>
-                        <h1>X-Micro Market Intelligence</h1>
-                    </div>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <button
-                            className="action-btn danger"
-                            onClick={handleClearNews}
-                            disabled={loading || articles.length === 0}
-                            title="Elimina todas las noticias del panel. Podrás buscar nuevas después."
-                        >
-                            🗑 Borrar Todo
-                        </button>
-                        <button
-                            className="fetch-btn"
-                            onClick={handleFetchNews}
-                            disabled={loading}
-                            title="Busca las últimas noticias del mercado de memoria. Puede tomar 1-2 minutos."
-                        >
-                            {loading ? (
-                                <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Buscando noticias...
-                                </>
-                            ) : "📡 Buscar Noticias"}
-                        </button>
+                    <h1>X-Micro Market Intelligence</h1>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        {!sidebarOpen && (
+                            <button
+                                onClick={toggleSidebar}
+                                style={{
+                                    background: 'var(--surface)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '0.4rem',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                    padding: '0.4rem 0.8rem',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                }}
+                            >
+                                ► Guía
+                            </button>
+                        )}
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button
+                                className="action-btn danger"
+                                onClick={handleClearNews}
+                                disabled={loading || articles.length === 0}
+                                title="Elimina todas las noticias del panel. Podrás buscar nuevas después."
+                            >
+                                🗑 Borrar Todo
+                            </button>
+                            <button
+                                className="fetch-btn"
+                                onClick={handleFetchNews}
+                                disabled={loading}
+                                title="Busca las últimas noticias del mercado de memoria. Puede tomar 1-2 minutos."
+                            >
+                                {loading ? (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Buscando noticias...
+                                    </>
+                                ) : "📡 Buscar Noticias"}
+                            </button>
+                        </div>
                     </div>
                 </header>
 
