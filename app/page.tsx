@@ -31,16 +31,15 @@ export default function NewsletterDashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const fetchTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Persist sidebar state
     useEffect(() => {
-        const saved = localStorage.getItem('sidebarOpen');
-        if (saved !== null) setSidebarOpen(saved === 'true');
+        const saved = localStorage.getItem("sidebarOpen");
+        if (saved !== null) setSidebarOpen(saved === "true");
     }, []);
 
     const toggleSidebar = () => {
         const next = !sidebarOpen;
         setSidebarOpen(next);
-        localStorage.setItem('sidebarOpen', String(next));
+        localStorage.setItem("sidebarOpen", String(next));
     };
 
     useEffect(() => {
@@ -87,7 +86,7 @@ export default function NewsletterDashboard() {
     };
 
     const handleClearNews = async () => {
-        if (!confirm("¿Estás seguro de que quieres borrar todas las noticias? Se eliminarán del panel y tendrás que buscar nuevamente.")) return;
+        if (!confirm("¿Estás seguro de que quieres borrar todas las noticias?")) return;
         setLoading(true);
         try {
             const res = await fetch("/api/clear", { method: "POST" });
@@ -95,8 +94,6 @@ export default function NewsletterDashboard() {
                 setArticles([]);
                 setSelectedUrls(new Set());
                 sessionStorage.removeItem("selectedArticles");
-            } else {
-                console.error("Failed to clear data");
             }
         } catch (err) {
             console.error("Error clearing data:", err);
@@ -109,23 +106,18 @@ export default function NewsletterDashboard() {
         setLoading(true);
         setFetchElapsed(0);
         setFetchStep(0);
-
         const startTime = Date.now();
         fetchTimerRef.current = setInterval(() => {
             setFetchElapsed(Math.floor((Date.now() - startTime) / 1000));
         }, 1000);
-
         const stopFetch = () => {
             if (fetchTimerRef.current) clearInterval(fetchTimerRef.current);
             setLoading(false);
             setFetchElapsed(0);
             setFetchStep(0);
         };
-
         try {
-            await fetch("https://n8n.quicklyandgood.com/webhook/6b334af6-c189-45ed-89f7-4400a8149e05", {
-                method: "POST"
-            });
+            await fetch("https://n8n.quicklyandgood.com/webhook/6b334af6-c189-45ed-89f7-4400a8149e05", { method: "POST" });
             const pollStart = Date.now();
             const poll = setInterval(async () => {
                 const res = await fetch("/api/articles");
@@ -169,178 +161,174 @@ export default function NewsletterDashboard() {
     const toggleAllVisible = () => {
         const allVisibleUrls = filteredArticles.map(a => a.url);
         const allSelected = allVisibleUrls.every(url => selectedUrls.has(url));
-
         const next = new Set(selectedUrls);
-        if (allSelected) {
-            allVisibleUrls.forEach(url => next.delete(url));
-        } else {
-            allVisibleUrls.forEach(url => next.add(url));
-        }
+        if (allSelected) allVisibleUrls.forEach(url => next.delete(url));
+        else allVisibleUrls.forEach(url => next.add(url));
         setSelectedUrls(next);
     };
 
     const filteredArticles = articles.filter(article => {
-        const matchesFilter =
-            activeFilter === "ALL" ||
-            (article.category || "").toUpperCase() === activeFilter.toUpperCase();
-
+        const matchesFilter = activeFilter === "ALL" || (article.category || "").toUpperCase() === activeFilter.toUpperCase();
         const q = searchQuery.toLowerCase();
-        const matchesSearch =
-            !q ||
-            (article.title || "").toLowerCase().includes(q) ||
-            (article.description || "").toLowerCase().includes(q) ||
-            (article.url || "").toLowerCase().includes(q);
-
+        const matchesSearch = !q || (article.title || "").toLowerCase().includes(q) || (article.description || "").toLowerCase().includes(q) || (article.url || "").toLowerCase().includes(q);
         return matchesFilter && matchesSearch;
     });
 
     return (
         <div className="dashboard-wrapper">
-            {/* ── Left Sidebar ── */}
-            <aside className="sidebar" style={{
-                width: sidebarOpen ? '300px' : '0',
-                minWidth: sidebarOpen ? '300px' : '0',
-                transition: 'width 0.25s ease, min-width 0.25s ease',
-                overflow: 'hidden',
-                borderRight: sidebarOpen ? '1px solid var(--border)' : 'none',
+
+            {/* ── LEFT SIDEBAR ── */}
+            <aside style={{
+                width: sidebarOpen ? "300px" : "40px",
+                minWidth: sidebarOpen ? "300px" : "40px",
+                transition: "width 0.25s ease, min-width 0.25s ease",
+                overflow: "hidden",
+                borderRight: "1px solid var(--border)",
+                background: "var(--background)",
+                position: "sticky",
+                top: 0,
+                height: "100vh",
+                flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
             }}>
-                <div style={{ width: '300px', padding: '1.5rem 1.25rem' }}>
-                    {/* Sidebar header row: branding + close button */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <div>
-                            <div className="sidebar-logo">X-Micro</div>
-                            <div className="sidebar-subtitle">Market Intelligence</div>
-                        </div>
+                {/* Collapsed: just the ► arrow button centered */}
+                {!sidebarOpen && (
+                    <div style={{ display: "flex", justifyContent: "center", paddingTop: "1.2rem" }}>
                         <button
                             onClick={toggleSidebar}
-                            title="Ocultar panel de guía"
+                            title="Mostrar guía"
                             style={{
-                                background: 'transparent',
-                                border: '1px solid var(--border)',
-                                borderRadius: '0.4rem',
-                                color: 'var(--text-secondary)',
-                                cursor: 'pointer',
-                                padding: '0.3rem 0.6rem',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.3rem',
-                                whiteSpace: 'nowrap',
-                                transition: 'all 0.2s',
+                                background: "var(--surface)",
+                                border: "1px solid var(--border)",
+                                borderRadius: "0.4rem",
+                                color: "var(--text-secondary)",
+                                cursor: "pointer",
+                                width: "28px",
+                                height: "28px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "0.8rem",
                             }}
                         >
-                            ◄ Cerrar
+                            ▶
                         </button>
                     </div>
+                )}
 
-                    <div className="sidebar-section-title">Cómo usar</div>
-                    <div className="sidebar-steps">
-                        <div className="sidebar-step">
-                            <div className="sidebar-step-num">1</div>
-                            <div className="sidebar-step-text">
-                                Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria DRAM y NAND.
+                {/* Expanded: full content in a fixed-width inner div */}
+                {sidebarOpen && (
+                    <div style={{ width: "300px", padding: "1.5rem 1.25rem", overflowY: "auto", height: "100%" }}>
+                        {/* Header row: branding + close button */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+                            <div>
+                                <div className="sidebar-logo">X-Micro</div>
+                                <div className="sidebar-subtitle">Market Intelligence</div>
+                            </div>
+                            <button
+                                onClick={toggleSidebar}
+                                title="Ocultar panel"
+                                style={{
+                                    background: "transparent",
+                                    border: "1px solid var(--border)",
+                                    borderRadius: "0.4rem",
+                                    color: "var(--text-secondary)",
+                                    cursor: "pointer",
+                                    padding: "0.3rem 0.65rem",
+                                    fontSize: "0.75rem",
+                                    fontWeight: 600,
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                ◀ Cerrar
+                            </button>
+                        </div>
+
+                        <div className="sidebar-section-title">Cómo usar</div>
+                        <div className="sidebar-steps">
+                            <div className="sidebar-step">
+                                <div className="sidebar-step-num">1</div>
+                                <div className="sidebar-step-text">
+                                    Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria DRAM y NAND.
+                                </div>
+                            </div>
+                            <div className="sidebar-step">
+                                <div className="sidebar-step-num">2</div>
+                                <div className="sidebar-step-text">
+                                    <strong>Selecciona</strong> las noticias que quieres incluir haciendo clic en cada tarjeta.
+                                </div>
+                            </div>
+                            <div className="sidebar-step">
+                                <div className="sidebar-step-num">3</div>
+                                <div className="sidebar-step-text">
+                                    Haz clic en <strong>Revisar y Generar →</strong> en la barra inferior para continuar.
+                                </div>
+                            </div>
+                            <div className="sidebar-step">
+                                <div className="sidebar-step-num">4</div>
+                                <div className="sidebar-step-text">
+                                    En la siguiente pantalla puedes <strong>ver una vista previa</strong> del correo o enviarlo directamente.
+                                </div>
                             </div>
                         </div>
-                        <div className="sidebar-step">
-                            <div className="sidebar-step-num">2</div>
-                            <div className="sidebar-step-text">
-                                <strong>Selecciona</strong> las noticias que quieres incluir en el newsletter haciendo clic en cada tarjeta.
+
+                        <hr className="sidebar-divider" />
+
+                        <div className="sidebar-section-title">Acciones</div>
+                        <div className="sidebar-steps">
+                            <div className="sidebar-step">
+                                <div className="sidebar-step-num" style={{ background: "var(--accent)" }}>📡</div>
+                                <div className="sidebar-step-text">
+                                    <strong>Buscar Noticias</strong> — descarga noticias frescas del mercado. Tarda <strong>1-2 minutos</strong>.
+                                </div>
+                            </div>
+                            <div className="sidebar-step">
+                                <div className="sidebar-step-num" style={{ background: "var(--danger)" }}>🗑</div>
+                                <div className="sidebar-step-text">
+                                    <strong>Borrar Todo</strong> — elimina todas las noticias. Las nuevas serán diferentes.
+                                </div>
                             </div>
                         </div>
-                        <div className="sidebar-step">
-                            <div className="sidebar-step-num">3</div>
-                            <div className="sidebar-step-text">
-                                Haz clic en <strong>Revisar y Generar →</strong> en la barra inferior para continuar.
-                            </div>
-                        </div>
-                        <div className="sidebar-step">
-                            <div className="sidebar-step-num">4</div>
-                            <div className="sidebar-step-text">
-                                En la siguiente pantalla puedes <strong>ver una vista previa</strong> del correo o enviarlo directamente.
-                            </div>
+
+                        <div className="sidebar-note">
+                            💡 Los títulos son <strong>mejorados y traducidos al español</strong> por la IA — pueden diferir del original en inglés.
                         </div>
                     </div>
-
-                    <hr className="sidebar-divider" />
-
-                    <div className="sidebar-section-title">Acciones</div>
-                    <div className="sidebar-steps">
-                        <div className="sidebar-step">
-                            <div className="sidebar-step-num" style={{ background: 'var(--accent)' }}>📡</div>
-                            <div className="sidebar-step-text">
-                                <strong>Buscar Noticias</strong> — descarga noticias frescas del mercado. Tarda <strong>1-2 minutos</strong>.
-                            </div>
-                        </div>
-                        <div className="sidebar-step">
-                            <div className="sidebar-step-num" style={{ background: 'var(--danger)' }}>🗑</div>
-                            <div className="sidebar-step-text">
-                                <strong>Borrar Todo</strong> — elimina todas las noticias del panel. Las nuevas que busques serán diferentes.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="sidebar-note">
-                        💡 Los títulos de las noticias son <strong>mejorados y traducidos al español</strong> por la IA — pueden diferir del original en inglés.
-                    </div>
-                </div>
+                )}
             </aside>
 
-            {/* ── Main Content ── */}
+            {/* ── MAIN CONTENT ── */}
             <div className="dashboard-container">
                 <header className="header">
                     <h1>X-Micro Market Intelligence</h1>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        {!sidebarOpen && (
-                            <button
-                                onClick={toggleSidebar}
-                                style={{
-                                    background: 'var(--surface)',
-                                    border: '1px solid var(--border)',
-                                    borderRadius: '0.4rem',
-                                    color: 'var(--text-secondary)',
-                                    cursor: 'pointer',
-                                    padding: '0.4rem 0.8rem',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 600,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.4rem',
-                                }}
-                            >
-                                ► Guía
-                            </button>
-                        )}
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button
-                                className="action-btn danger"
-                                onClick={handleClearNews}
-                                disabled={loading || articles.length === 0}
-                                title="Elimina todas las noticias del panel. Podrás buscar nuevas después."
-                            >
-                                🗑 Borrar Todo
-                            </button>
-                            <button
-                                className="fetch-btn"
-                                onClick={handleFetchNews}
-                                disabled={loading}
-                                title="Busca las últimas noticias del mercado de memoria. Puede tomar 1-2 minutos."
-                            >
-                                {loading ? (
-                                    <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Buscando noticias...
-                                    </>
-                                ) : "📡 Buscar Noticias"}
-                            </button>
-                        </div>
+                    <div style={{ display: "flex", gap: "1rem" }}>
+                        <button
+                            className="action-btn danger"
+                            onClick={handleClearNews}
+                            disabled={loading || articles.length === 0}
+                        >
+                            🗑 Borrar Todo
+                        </button>
+                        <button
+                            className="fetch-btn"
+                            onClick={handleFetchNews}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}>
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" style={{ opacity: 0.25 }}></circle>
+                                        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" style={{ opacity: 0.75 }}></path>
+                                    </svg>
+                                    Buscando noticias...
+                                </>
+                            ) : "📡 Buscar Noticias"}
+                        </button>
                     </div>
                 </header>
 
-                {/* ── Fetch Progress Panel ── */}
+                {/* Fetch Progress */}
                 {loading && (
                     <div className="progress-panel" style={{ marginBottom: "1.5rem" }}>
                         <div className="progress-panel-header">
@@ -384,7 +372,7 @@ export default function NewsletterDashboard() {
                         {["ALL", "DRAM", "NAND", "SUPPLY"].map(filter => (
                             <button
                                 key={filter}
-                                className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
+                                className={`filter-btn ${activeFilter === filter ? "active" : ""}`}
                                 onClick={() => setActiveFilter(filter)}
                             >
                                 {filter === "ALL" ? "TODAS" : filter}
@@ -408,8 +396,8 @@ export default function NewsletterDashboard() {
                 {articles.length === 0 ? (
                     <div style={{ padding: "4rem 2rem", textAlign: "center", color: "var(--text-secondary)", background: "var(--surface)", borderRadius: "0.5rem", marginTop: "2rem", border: "1px dashed var(--border)" }}>
                         <p style={{ fontSize: "1.3rem", marginBottom: "0.75rem" }}>📭 No hay noticias cargadas</p>
-                        <p style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias del mercado de memoria.</p>
-                        <p style={{ fontSize: "0.82rem", opacity: 0.6 }}>⏳ Este proceso puede tardar entre 1 y 2 minutos — la IA busca, filtra y organiza la información automáticamente.</p>
+                        <p style={{ fontSize: "0.9rem", marginBottom: "0.5rem" }}>Haz clic en <strong>📡 Buscar Noticias</strong> para obtener las últimas noticias.</p>
+                        <p style={{ fontSize: "0.82rem", opacity: 0.6 }}>⏳ Este proceso puede tardar entre 1 y 2 minutos.</p>
                     </div>
                 ) : filteredArticles.length === 0 ? (
                     <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-secondary)" }}>
@@ -423,21 +411,15 @@ export default function NewsletterDashboard() {
                             return (
                                 <div
                                     key={i}
-                                    className={`article-card ${isSelected ? 'selected' : ''} ${isExpanded ? 'expanded' : ''}`}
+                                    className={`article-card ${isSelected ? "selected" : ""} ${isExpanded ? "expanded" : ""}`}
                                     onClick={() => toggleSelection(article.url)}
                                 >
                                     <div className="card-header">
-                                        <span className={`tag ${article.category || 'GENERAL'}`}>
-                                            {article.category || 'NEWS'}
+                                        <span className={`tag ${article.category || "GENERAL"}`}>
+                                            {article.category || "NEWS"}
                                         </span>
-                                        <input
-                                            type="checkbox"
-                                            className="card-checkbox"
-                                            checked={isSelected}
-                                            readOnly
-                                        />
+                                        <input type="checkbox" className="card-checkbox" checked={isSelected} readOnly />
                                     </div>
-
                                     <a
                                         href={article.url}
                                         target="_blank"
@@ -450,17 +432,15 @@ export default function NewsletterDashboard() {
                                     {article.description ? (
                                         <p className="card-description">{article.description}</p>
                                     ) : (
-                                        <p className="card-description" style={{ fontStyle: 'italic', opacity: 0.5, color: 'var(--text-secondary)' }}>
+                                        <p className="card-description" style={{ fontStyle: "italic", opacity: 0.5 }}>
                                             Sin descripción disponible.
                                         </p>
                                     )}
-
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
-                                        <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>
+                                    <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", overflowWrap: "anywhere", marginTop: "0.5rem", marginBottom: "0.5rem" }}>
+                                        <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline", color: "inherit" }}>
                                             {article.url}
                                         </a>
                                     </div>
-
                                     <div className="card-footer">
                                         <span>
                                             {(() => {
@@ -468,11 +448,8 @@ export default function NewsletterDashboard() {
                                                 catch { return "link"; }
                                             })()}
                                         </span>
-                                        <button
-                                            className="expand-btn"
-                                            onClick={(e) => toggleExpand(article.url, e)}
-                                        >
-                                            {isExpanded ? 'Contraer ▲' : 'Expandir ▼'}
+                                        <button className="expand-btn" onClick={(e) => toggleExpand(article.url, e)}>
+                                            {isExpanded ? "Contraer ▲" : "Expandir ▼"}
                                         </button>
                                     </div>
                                 </div>
@@ -482,20 +459,17 @@ export default function NewsletterDashboard() {
                 )}
 
                 {/* Sticky Bottom Bar */}
-                <div className="action-bar" style={{ transform: selectedUrls.size > 0 ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                <div className="action-bar" style={{ transform: selectedUrls.size > 0 ? "translateY(0)" : "translateY(100%)", transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)" }}>
                     <div className="selection-info">
                         <span className="pill">{selectedUrls.size}</span>
                         <span>
-                            {selectedUrls.size === 1 ? 'noticia seleccionada' : 'noticias seleccionadas'}
-                            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                            {selectedUrls.size === 1 ? "noticia seleccionada" : "noticias seleccionadas"}
+                            <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginLeft: "0.5rem" }}>
                                 — la IA las usará para crear el correo final
                             </span>
                         </span>
                     </div>
-                    <button
-                        className="action-btn success"
-                        onClick={() => router.push('/review')}
-                    >
+                    <button className="action-btn success" onClick={() => router.push("/review")}>
                         Revisar y Generar →
                     </button>
                 </div>
