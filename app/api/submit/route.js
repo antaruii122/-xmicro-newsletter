@@ -7,7 +7,7 @@ const kv = new Redis({
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { selected_articles } = body;
+        const { selected_articles, mode = 'generate' } = body;
 
         if (!selected_articles || selected_articles.length === 0) {
             return Response.json({ error: 'No articles selected' }, { status: 400 });
@@ -23,6 +23,11 @@ export async function POST(request) {
             resumeUrl = 'https://' + resumeUrl;
         }
 
+        // If preview mode, clear any stale preview HTML so polling is fresh
+        if (mode === 'preview') {
+            await kv.del('newsletter:preview_html');
+        }
+
         const n8nResponse = await fetch(resumeUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -30,6 +35,7 @@ export async function POST(request) {
                 selected_articles,
                 article_count: selected_articles.length,
                 submitted_at: new Date().toISOString(),
+                mode,
             }),
         });
 
@@ -37,11 +43,14 @@ export async function POST(request) {
             throw new Error(`n8n responded with ${n8nResponse.status}`);
         }
 
-        await kv.set('newsletter:status', 'sent', { ex: 86400 });
+        await kv.set('newsletter:status', mode === 'preview' ? 'previewing' : 'sent', { ex: 86400 });
 
         return Response.json({
             success: true,
-            message: `${selected_articles.length} artículos enviados a n8n.`,
+            mode,
+            message: mode === 'preview'
+                ? 'Preview requested. Generating HTML...'
+                : `${selected_articles.length} artículos enviados a n8n.`,
         });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
