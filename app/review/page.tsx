@@ -10,17 +10,7 @@ interface Article {
     category: string;
 }
 
-const POLL_INTERVAL_MS = 2500;
-const POLL_TIMEOUT_MS = 150_000; // 2.5 min max
-
-// Steps shown to the user during preview generation
-// Each step has a label and the approximate second it activates
-const STEPS = [
-    { label: "Sending articles to n8n...", activeAt: 0 },
-    { label: "AI is analyzing the articles...", activeAt: 8 },
-    { label: "Generating newsletter HTML...", activeAt: 40 },
-    { label: "Finalizing & sending to app...", activeAt: 70 },
-];
+const POLL_INTERVAL_MS = 3000;
 
 export default function ReviewPage() {
     const router = useRouter();
@@ -30,13 +20,7 @@ export default function ReviewPage() {
     const [previewHtml, setPreviewHtml] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
-    // Progress state
-    const [elapsed, setElapsed] = useState(0);
-    const [currentStep, setCurrentStep] = useState(0);
-
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const pollStart = useRef<number>(0);
 
     useEffect(() => {
         const stored = sessionStorage.getItem("selectedArticles");
@@ -46,16 +30,8 @@ export default function ReviewPage() {
         }
         return () => {
             if (pollRef.current) clearInterval(pollRef.current);
-            if (timerRef.current) clearInterval(timerRef.current);
         };
     }, []);
-
-    // Advance the step indicator based on elapsed time
-    useEffect(() => {
-        if (!isPreviewing) return;
-        const step = [...STEPS].reverse().find(s => elapsed >= s.activeAt);
-        if (step) setCurrentStep(STEPS.indexOf(step));
-    }, [elapsed, isPreviewing]);
 
     const removeArticle = (urlToRemove: string) => {
         const updated = selectedArticles.filter(a => a.url !== urlToRemove);
@@ -69,10 +45,7 @@ export default function ReviewPage() {
 
     const stopProgress = () => {
         if (pollRef.current) clearInterval(pollRef.current);
-        if (timerRef.current) clearInterval(timerRef.current);
         setIsPreviewing(false);
-        setElapsed(0);
-        setCurrentStep(0);
     };
 
     /* ── 1. Generate Newsletter (fire → email) ── */
@@ -105,8 +78,6 @@ export default function ReviewPage() {
     const handlePreview = async () => {
         if (selectedArticles.length === 0) return;
         setIsPreviewing(true);
-        setElapsed(0);
-        setCurrentStep(0);
         setPreviewHtml(null);
 
         try {
@@ -128,20 +99,8 @@ export default function ReviewPage() {
             return;
         }
 
-        // Start elapsed timer
-        pollStart.current = Date.now();
-        timerRef.current = setInterval(() => {
-            setElapsed(Math.floor((Date.now() - pollStart.current) / 1000));
-        }, 1000);
-
-        // Start polling
+        // Poll indefinitely until HTML arrives
         pollRef.current = setInterval(async () => {
-            const elapsedMs = Date.now() - pollStart.current;
-            if (elapsedMs > POLL_TIMEOUT_MS) {
-                stopProgress();
-                alert("⏱ Preview timed out. n8n took too long to respond.");
-                return;
-            }
             try {
                 const r = await fetch("/api/preview-html");
                 const d = await r.json();
@@ -172,8 +131,7 @@ export default function ReviewPage() {
         }
     };
 
-    const estimatedTotal = 90;
-    const progressPct = Math.min((elapsed / estimatedTotal) * 100, 95);
+
 
     return (
         <div className="review-container">
@@ -237,35 +195,13 @@ export default function ReviewPage() {
                     {/* ── Progress Panel (shown while previewing) ── */}
                     {isPreviewing && (
                         <div className="progress-panel">
-                            <div className="progress-panel-header">
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                                    <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />
-                                    <span style={{ fontWeight: 700, fontSize: "1rem" }}>Generating HTML Preview</span>
-                                </div>
-                                <span className="progress-timer">{elapsed}s elapsed · ~{Math.max(0, estimatedTotal - elapsed)}s remaining</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                                <span className="spinner" style={{ width: 20, height: 20, borderWidth: 3 }} />
+                                <span style={{ fontWeight: 700, fontSize: "1rem" }}>Generating HTML Preview…</span>
                             </div>
-
-                            {/* Progress bar */}
-                            <div className="progress-bar-track">
-                                <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
-                            </div>
-
-                            {/* Steps */}
-                            <div className="progress-steps">
-                                {STEPS.map((step, i) => {
-                                    const done = i < currentStep;
-                                    const active = i === currentStep;
-                                    const pending = i > currentStep;
-                                    return (
-                                        <div key={i} className={`progress-step ${done ? "done" : active ? "active" : "pending"}`}>
-                                            <div className="step-dot">
-                                                {done ? "✓" : active ? <span className="spinner step-spinner" /> : i + 1}
-                                            </div>
-                                            <span>{step.label}</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                            <p style={{ margin: "0.75rem 0 0", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                                ⏳ The AI is working on it — this can take a few minutes. Hang tight, the preview will appear automatically.
+                            </p>
                         </div>
                     )}
 
