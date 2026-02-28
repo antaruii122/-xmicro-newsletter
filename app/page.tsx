@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+
+const FETCH_STEPS = [
+    { label: "Triggering market data search...", activeAt: 0 },
+    { label: "Searching DRAM, NAND & supply chain...", activeAt: 6 },
+    { label: "AI filtering & cleaning results...", activeAt: 22 },
+    { label: "Sending data to your dashboard...", activeAt: 48 },
+];
+const FETCH_ESTIMATED = 70;
 
 interface Article {
     title: string;
@@ -14,10 +22,13 @@ export default function NewsletterDashboard() {
     const router = useRouter();
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(false);
+    const [fetchElapsed, setFetchElapsed] = useState(0);
+    const [fetchStep, setFetchStep] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeFilter, setActiveFilter] = useState("ALL");
     const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
     const [expandedUrls, setExpandedUrls] = useState<Set<string>>(new Set());
+    const fetchTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Load articles from Redis and previous selections from sessionStorage on mount
     useEffect(() => {
@@ -32,7 +43,15 @@ export default function NewsletterDashboard() {
                 console.error("Failed to parse saved selections", e);
             }
         }
+        return () => { if (fetchTimerRef.current) clearInterval(fetchTimerRef.current); };
     }, []);
+
+    // Advance fetch step based on elapsed time
+    useEffect(() => {
+        if (!loading) return;
+        const step = [...FETCH_STEPS].reverse().find(s => fetchElapsed >= s.activeAt);
+        if (step) setFetchStep(FETCH_STEPS.indexOf(step));
+    }, [fetchElapsed, loading]);
 
     // Save selections whenever they change
     useEffect(() => {
@@ -78,11 +97,27 @@ export default function NewsletterDashboard() {
 
     const handleFetchNews = async () => {
         setLoading(true);
+        setFetchElapsed(0);
+        setFetchStep(0);
+
+        // Start elapsed timer
+        const startTime = Date.now();
+        fetchTimerRef.current = setInterval(() => {
+            setFetchElapsed(Math.floor((Date.now() - startTime) / 1000));
+        }, 1000);
+
+        const stopFetch = () => {
+            if (fetchTimerRef.current) clearInterval(fetchTimerRef.current);
+            setLoading(false);
+            setFetchElapsed(0);
+            setFetchStep(0);
+        };
+
         try {
             await fetch("https://n8n.quicklyandgood.com/webhook/6b334af6-c189-45ed-89f7-4400a8149e05", {
                 method: "POST"
             });
-            const start = Date.now();
+            const pollStart = Date.now();
             const poll = setInterval(async () => {
                 const res = await fetch("/api/articles");
                 if (res.ok) {
@@ -91,17 +126,19 @@ export default function NewsletterDashboard() {
                     if (list.length > 0) {
                         setArticles(list);
                         clearInterval(poll);
-                        setLoading(false);
+                        stopFetch();
+                        return;
                     }
                 }
-                if (Date.now() - start > 90000) {
+                if (Date.now() - pollStart > 120000) {
                     clearInterval(poll);
-                    setLoading(false);
+                    stopFetch();
+                    alert("⏱ Fetch timed out. n8n took too long.");
                 }
-            }, 5000);
+            }, 4000);
         } catch (err) {
             console.error("Error:", err);
-            setLoading(false);
+            stopFetch();
         }
     };
 
@@ -177,6 +214,38 @@ export default function NewsletterDashboard() {
                     </button>
                 </div>
             </header>
+
+            {/* ── Fetch Progress Panel ── */}
+            {loading && (
+                <div className="progress-panel" style={{ marginBottom: "1.5rem" }}>
+                    <div className="progress-panel-header">
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />
+                            <span style={{ fontWeight: 700, fontSize: "1rem" }}>Fetching Market Intelligence</span>
+                        </div>
+                        <span className="progress-timer">
+                            {fetchElapsed}s elapsed · ~{Math.max(0, FETCH_ESTIMATED - fetchElapsed)}s remaining
+                        </span>
+                    </div>
+                    <div className="progress-bar-track">
+                        <div className="progress-bar-fill" style={{ width: `${Math.min((fetchElapsed / FETCH_ESTIMATED) * 100, 95)}%` }} />
+                    </div>
+                    <div className="progress-steps">
+                        {FETCH_STEPS.map((step, i) => {
+                            const done = i < fetchStep;
+                            const active = i === fetchStep;
+                            return (
+                                <div key={i} className={`progress-step ${done ? "done" : active ? "active" : "pending"}`}>
+                                    <div className="step-dot">
+                                        {done ? "✓" : active ? <span className="spinner step-spinner" /> : i + 1}
+                                    </div>
+                                    <span>{step.label}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             <div className="controls">
                 <input
