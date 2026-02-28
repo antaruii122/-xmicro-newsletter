@@ -197,29 +197,31 @@ export default function NewsletterDashboard() {
     return (
         <div className="dashboard-wrapper">
             {/* ── Left Sidebar ── */}
-            <aside className="sidebar" style={{ width: sidebarOpen ? '260px' : '48px', transition: 'width 0.25s ease', overflow: 'hidden' }}>
-                {/* Toggle button always visible */}
+            <aside className="sidebar" style={{ width: sidebarOpen ? '260px' : '28px', transition: 'width 0.25s ease', overflow: 'visible', position: 'relative' }}>
+                {/* Vertical tab toggle — pinned to the right edge */}
                 <button
                     onClick={toggleSidebar}
                     title={sidebarOpen ? 'Ocultar guía' : 'Mostrar guía'}
                     style={{
-                        background: 'transparent',
-                        border: '1px solid var(--border)',
-                        borderRadius: '0.4rem',
-                        color: 'var(--text-secondary)',
+                        position: 'absolute',
+                        right: '-18px',
+                        top: '50%',
+                        transform: 'translateY(-50%) rotate(90deg)',
+                        background: 'var(--accent)',
+                        border: 'none',
+                        borderRadius: '0 0 6px 6px',
+                        color: '#fff',
                         cursor: 'pointer',
-                        padding: '0.3rem 0.5rem',
-                        fontSize: '0.85rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        marginBottom: sidebarOpen ? '1.25rem' : '0',
+                        padding: '6px 14px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.06em',
                         whiteSpace: 'nowrap',
-                        transition: 'all 0.2s',
-                        width: '100%',
+                        zIndex: 100,
+                        boxShadow: '0 2px 8px rgba(56,189,248,0.4)',
                     }}
                 >
-                    {sidebarOpen ? '◀ Ocultar guía' : '▶'}
+                    {sidebarOpen ? '▲ OCULTAR GUÍA' : '▼ GUÍA'}
                 </button>
                 <div className="sidebar-logo">X-Micro</div>
                 <div className="sidebar-subtitle">Market Intelligence</div>
