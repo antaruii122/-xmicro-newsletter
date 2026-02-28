@@ -15,7 +15,7 @@ export async function POST(request) {
         }
 
         // Store with 10-minute TTL
-        await kv.set('newsletter:preview_html', html, { ex: 600 });
+        await kv.set('newsletter:preview_html', html, { ex: 86400 });
 
         return Response.json({ success: true });
     } catch (err) {

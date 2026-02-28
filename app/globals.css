@@ -437,12 +437,126 @@ body {
     color: #fff;
 }
 
+/* ── Progress Panel ── */
+.progress-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.progress-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.progress-timer {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.progress-bar-track {
+    background: var(--border);
+    border-radius: 999px;
+    height: 6px;
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+    border-radius: 999px;
+    transition: width 0.8s ease;
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% center;
+    }
+
+    100% {
+        background-position: -200% center;
+    }
+}
+
+.progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.progress-step.done {
+    color: var(--success);
+}
+
+.progress-step.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.progress-step.pending {
+    color: var(--text-secondary);
+}
+
+.step-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.progress-step.done .step-dot {
+    background: var(--success);
+    color: #fff;
+}
+
+.progress-step.active .step-dot {
+    background: #6366f1;
+    color: #fff;
+}
+
+.progress-step.pending .step-dot {
+    background: var(--border);
+    color: var(--text-secondary);
+}
+
+.step-spinner {
+    width: 12px !important;
+    height: 12px !important;
+    border-width: 2px !important;
+}
+
 /* ── Review Action Bar ── */
 .review-actions {
     margin-top: 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+
     border-top: 1px solid var(--border);
     padding-top: 1.5rem;
     gap: 1rem;

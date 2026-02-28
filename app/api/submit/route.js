@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis'
+
 const kv = new Redis({
     url: process.env.KV_REST_API_URL,
     token: process.env.KV_REST_API_TOKEN,
@@ -13,22 +14,19 @@ export async function POST(request) {
             return Response.json({ error: 'No articles selected' }, { status: 400 });
         }
 
-        let resumeUrl = await kv.get('newsletter:resume_url');
+        // Use the fixed Workflow 2 webhook URL from env
+        const submitUrl = process.env.N8N_SUBMIT_WEBHOOK_URL;
 
-        if (!resumeUrl) {
-            return Response.json({ error: 'No n8n resume URL found.' }, { status: 400 });
+        if (!submitUrl) {
+            return Response.json({ error: 'N8N_SUBMIT_WEBHOOK_URL is not configured.' }, { status: 500 });
         }
 
-        if (typeof resumeUrl === 'string' && !resumeUrl.startsWith('http')) {
-            resumeUrl = 'https://' + resumeUrl;
-        }
-
-        // If preview mode, clear any stale preview HTML so polling is fresh
+        // If preview mode, clear any stale preview HTML so polling starts fresh
         if (mode === 'preview') {
             await kv.del('newsletter:preview_html');
         }
 
-        const n8nResponse = await fetch(resumeUrl, {
+        const n8nResponse = await fetch(submitUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -11,7 +11,16 @@ interface Article {
 }
 
 const POLL_INTERVAL_MS = 2500;
-const POLL_TIMEOUT_MS = 120_000; // 2 minutes max
+const POLL_TIMEOUT_MS = 150_000; // 2.5 min max
+
+// Steps shown to the user during preview generation
+// Each step has a label and the approximate second it activates
+const STEPS = [
+    { label: "Sending articles to n8n...", activeAt: 0 },
+    { label: "AI is analyzing the articles...", activeAt: 8 },
+    { label: "Generating newsletter HTML...", activeAt: 40 },
+    { label: "Finalizing & sending to app...", activeAt: 70 },
+];
 
 export default function ReviewPage() {
     const router = useRouter();
@@ -20,7 +29,13 @@ export default function ReviewPage() {
     const [isPreviewing, setIsPreviewing] = useState(false);
     const [previewHtml, setPreviewHtml] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+
+    // Progress state
+    const [elapsed, setElapsed] = useState(0);
+    const [currentStep, setCurrentStep] = useState(0);
+
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pollStart = useRef<number>(0);
 
     useEffect(() => {
@@ -29,8 +44,18 @@ export default function ReviewPage() {
             try { setSelectedArticles(JSON.parse(stored)); }
             catch (err) { console.error("Parse error", err); }
         }
-        return () => { if (pollRef.current) clearInterval(pollRef.current); };
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
     }, []);
+
+    // Advance the step indicator based on elapsed time
+    useEffect(() => {
+        if (!isPreviewing) return;
+        const step = [...STEPS].reverse().find(s => elapsed >= s.activeAt);
+        if (step) setCurrentStep(STEPS.indexOf(step));
+    }, [elapsed, isPreviewing]);
 
     const removeArticle = (urlToRemove: string) => {
         const updated = selectedArticles.filter(a => a.url !== urlToRemove);
@@ -42,7 +67,15 @@ export default function ReviewPage() {
         }
     };
 
-    /* ── 1. Generate Newsletter (fire-and-forget → email) ── */
+    const stopProgress = () => {
+        if (pollRef.current) clearInterval(pollRef.current);
+        if (timerRef.current) clearInterval(timerRef.current);
+        setIsPreviewing(false);
+        setElapsed(0);
+        setCurrentStep(0);
+    };
+
+    /* ── 1. Generate Newsletter (fire → email) ── */
     const handleGenerate = async () => {
         if (selectedArticles.length === 0) return;
         setIsGenerating(true);
@@ -68,10 +101,12 @@ export default function ReviewPage() {
         }
     };
 
-    /* ── 2. Preview HTML (poll until n8n posts back) ── */
+    /* ── 2. Preview HTML ── */
     const handlePreview = async () => {
         if (selectedArticles.length === 0) return;
         setIsPreviewing(true);
+        setElapsed(0);
+        setCurrentStep(0);
         setPreviewHtml(null);
 
         try {
@@ -83,22 +118,27 @@ export default function ReviewPage() {
             if (!res.ok) {
                 const data = await res.json();
                 alert(`Error: ${data.error || "Failed to request preview."}`);
-                setIsPreviewing(false);
+                stopProgress();
                 return;
             }
         } catch (err) {
             console.error("Preview request error:", err);
             alert("An error occurred while requesting the preview.");
-            setIsPreviewing(false);
+            stopProgress();
             return;
         }
 
-        // Start polling
+        // Start elapsed timer
         pollStart.current = Date.now();
+        timerRef.current = setInterval(() => {
+            setElapsed(Math.floor((Date.now() - pollStart.current) / 1000));
+        }, 1000);
+
+        // Start polling
         pollRef.current = setInterval(async () => {
-            if (Date.now() - pollStart.current > POLL_TIMEOUT_MS) {
-                clearInterval(pollRef.current!);
-                setIsPreviewing(false);
+            const elapsedMs = Date.now() - pollStart.current;
+            if (elapsedMs > POLL_TIMEOUT_MS) {
+                stopProgress();
                 alert("⏱ Preview timed out. n8n took too long to respond.");
                 return;
             }
@@ -106,9 +146,8 @@ export default function ReviewPage() {
                 const r = await fetch("/api/preview-html");
                 const d = await r.json();
                 if (d.html) {
-                    clearInterval(pollRef.current!);
+                    stopProgress();
                     setPreviewHtml(d.html);
-                    setIsPreviewing(false);
                 }
             } catch (_) { /* keep polling */ }
         }, POLL_INTERVAL_MS);
@@ -122,7 +161,6 @@ export default function ReviewPage() {
             setCopied(true);
             setTimeout(() => setCopied(false), 2500);
         } catch {
-            // Fallback for browsers that block clipboard API
             const ta = document.createElement("textarea");
             ta.value = previewHtml;
             document.body.appendChild(ta);
@@ -133,6 +171,9 @@ export default function ReviewPage() {
             setTimeout(() => setCopied(false), 2500);
         }
     };
+
+    const estimatedTotal = 90;
+    const progressPct = Math.min((elapsed / estimatedTotal) * 100, 95);
 
     return (
         <div className="review-container">
@@ -168,12 +209,7 @@ export default function ReviewPage() {
                     {selectedArticles.map((article, i) => (
                         <div key={i} className="review-item">
                             <div className="review-item-content">
-                                <a
-                                    href={article.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="review-item-title"
-                                >
+                                <a href={article.url} target="_blank" rel="noopener noreferrer" className="review-item-title">
                                     {article.title}
                                 </a>
                                 <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", wordBreak: "break-all", marginTop: "4px", marginBottom: "8px" }}>
@@ -192,17 +228,48 @@ export default function ReviewPage() {
                                     </span>
                                 </div>
                             </div>
-                            <button
-                                className="remove-btn"
-                                onClick={() => removeArticle(article.url)}
-                                title="Remove from selection"
-                            >
+                            <button className="remove-btn" onClick={() => removeArticle(article.url)} title="Remove from selection">
                                 Remove
                             </button>
                         </div>
                     ))}
 
-                    {/* ─── Action Bar ─── */}
+                    {/* ── Progress Panel (shown while previewing) ── */}
+                    {isPreviewing && (
+                        <div className="progress-panel">
+                            <div className="progress-panel-header">
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                                    <span className="spinner" style={{ width: 18, height: 18, borderWidth: 3 }} />
+                                    <span style={{ fontWeight: 700, fontSize: "1rem" }}>Generating HTML Preview</span>
+                                </div>
+                                <span className="progress-timer">{elapsed}s elapsed · ~{Math.max(0, estimatedTotal - elapsed)}s remaining</span>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="progress-bar-track">
+                                <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
+                            </div>
+
+                            {/* Steps */}
+                            <div className="progress-steps">
+                                {STEPS.map((step, i) => {
+                                    const done = i < currentStep;
+                                    const active = i === currentStep;
+                                    const pending = i > currentStep;
+                                    return (
+                                        <div key={i} className={`progress-step ${done ? "done" : active ? "active" : "pending"}`}>
+                                            <div className="step-dot">
+                                                {done ? "✓" : active ? <span className="spinner step-spinner" /> : i + 1}
+                                            </div>
+                                            <span>{step.label}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Action Bar ── */}
                     <div className="review-actions">
                         <button
                             className="action-btn danger"
@@ -210,42 +277,39 @@ export default function ReviewPage() {
                                 sessionStorage.removeItem("selectedArticles");
                                 setSelectedArticles([]);
                             }}
+                            disabled={isPreviewing || isGenerating}
                         >
                             Clear All
                         </button>
 
                         <div style={{ display: "flex", gap: "0.75rem" }}>
-                            {/* Button 2 – Preview HTML */}
                             <button
                                 className={`action-btn preview-btn${isPreviewing ? " loading" : ""}`}
                                 onClick={handlePreview}
                                 disabled={isPreviewing || isGenerating || selectedArticles.length === 0}
                             >
-                                {isPreviewing ? (
-                                    <><span className="spinner" /> Generando vista previa…</>
-                                ) : (
-                                    <>&#128065; Ver HTML</>
-                                )}
+                                {isPreviewing
+                                    ? <><span className="spinner" /> Generando…</>
+                                    : <>&#128065; Ver HTML</>
+                                }
                             </button>
 
-                            {/* Button 1 – Generate & Send */}
                             <button
                                 className="action-btn success generate-btn"
                                 onClick={handleGenerate}
                                 disabled={isGenerating || isPreviewing || selectedArticles.length === 0}
                             >
-                                {isGenerating ? (
-                                    <><span className="spinner" /> Enviando…</>
-                                ) : (
-                                    <>&#9993; Generar Newsletter ({selectedArticles.length})</>
-                                )}
+                                {isGenerating
+                                    ? <><span className="spinner" /> Enviando…</>
+                                    : <>&#9993; Generar Newsletter ({selectedArticles.length})</>
+                                }
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ─── HTML Preview Modal ─── */}
+            {/* ── HTML Preview Modal ── */}
             {previewHtml && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setPreviewHtml(null); }}>
                     <div className="modal-box">
@@ -268,8 +332,6 @@ export default function ReviewPage() {
                                 </button>
                             </div>
                         </div>
-
-                        {/* Tabs: rendered preview + raw code */}
                         <div className="modal-tabs">
                             <PreviewTabs html={previewHtml} />
                         </div>
@@ -280,37 +342,22 @@ export default function ReviewPage() {
     );
 }
 
-/* ── Inner component: tabbed rendered/raw view ── */
 function PreviewTabs({ html }: { html: string }) {
     const [tab, setTab] = useState<"preview" | "code">("preview");
-
     return (
         <>
             <div className="tab-bar">
-                <button
-                    className={`tab-btn${tab === "preview" ? " active" : ""}`}
-                    onClick={() => setTab("preview")}
-                >
+                <button className={`tab-btn${tab === "preview" ? " active" : ""}`} onClick={() => setTab("preview")}>
                     Rendered Preview
                 </button>
-                <button
-                    className={`tab-btn${tab === "code" ? " active" : ""}`}
-                    onClick={() => setTab("code")}
-                >
+                <button className={`tab-btn${tab === "code" ? " active" : ""}`} onClick={() => setTab("code")}>
                     HTML Code
                 </button>
             </div>
-
-            {tab === "preview" ? (
-                <iframe
-                    srcDoc={html}
-                    className="modal-iframe"
-                    title="Newsletter Preview"
-                    sandbox="allow-same-origin"
-                />
-            ) : (
-                <pre className="html-code-block">{html}</pre>
-            )}
+            {tab === "preview"
+                ? <iframe srcDoc={html} className="modal-iframe" title="Newsletter Preview" sandbox="allow-same-origin" />
+                : <pre className="html-code-block">{html}</pre>
+            }
         </>
     );
 }
