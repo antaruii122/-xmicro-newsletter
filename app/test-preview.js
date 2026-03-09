@@ -8,7 +8,7 @@ if (!urlMatch || !tokenMatch) {
     process.exit(1);
 }
 
-const url = urlMatch[1] + '/get/newsletter:raw_payload';
+const url = urlMatch[1] + '/get/newsletter:preview_html';
 const token = tokenMatch[1];
 
 fetch(url, { headers: { Authorization: 'Bearer ' + token } })
@@ -18,6 +18,6 @@ fetch(url, { headers: { Authorization: 'Bearer ' + token } })
             const parsed = typeof d.result === 'string' ? JSON.parse(d.result) : d.result;
             console.log(JSON.stringify(parsed).slice(0, 1000));
         } catch (e) {
-            console.error(e);
+            console.log("Raw result:", d.result ? d.result.slice(0, 200) : null);
         }
     });
